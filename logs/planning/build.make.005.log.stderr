@@ -1,0 +1,42 @@
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:[m[K In member function ‘[01m[Kvoid my_planning::MyPlanningClass::Pick()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:184:52:[m[K [01;31m[Kerror: [m[K‘[01m[Kpick1[m[K’ was not declared in this scope
+  184 |             grasps[0].grasp_pose.pose.position.x = [01;31m[Kpick1[m[K.position.x;
+      |                                                    [01;31m[K^~~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:[m[K In function ‘[01m[Kvoid my_planning::Place()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:224:38:[m[K [01;31m[Kerror: [m[K‘[01m[Ktau[m[K’ was not declared in this scope; did you mean ‘[01m[Ktan[m[K’?
+  224 |             orientation.setRPY(0, 0, [01;31m[Ktau[m[K / 4);  // A quarter turn about the z-axis
+      |                                      [01;31m[K^~~[m[K
+      |                                      [32m[Ktan[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:253:13:[m[K [01;31m[Kerror: [m[Kinvalid use of ‘[01m[Kthis[m[K’ in non-member function
+  253 |             [01;31m[Kthis[m[K->openGripper(place_location[0].post_place_posture);
+      |             [01;31m[K^~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:256:13:[m[K [01;31m[Kerror: [m[Kinvalid use of ‘[01m[Kthis[m[K’ in non-member function
+  256 |             [01;31m[Kthis[m[K->move_group.setSupportSurfaceName("table2");
+      |             [01;31m[K^~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:258:13:[m[K [01;31m[Kerror: [m[Kinvalid use of ‘[01m[Kthis[m[K’ in non-member function
+  258 |             [01;31m[Kthis[m[K->move_group.place("object", place_location);
+      |             [01;31m[K^~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:[m[K In member function ‘[01m[Kvoid my_planning::MyPlanningClass::Pick()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:184:52:[m[K [01;31m[Kerror: [m[K‘[01m[Kpick1[m[K’ was not declared in this scope
+  184 |             grasps[0].grasp_pose.pose.position.x = [01;31m[Kpick1[m[K.position.x;
+      |                                                    [01;31m[K^~~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:[m[K In function ‘[01m[Kvoid my_planning::Place()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:224:38:[m[K [01;31m[Kerror: [m[K‘[01m[Ktau[m[K’ was not declared in this scope; did you mean ‘[01m[Ktan[m[K’?
+  224 |             orientation.setRPY(0, 0, [01;31m[Ktau[m[K / 4);  // A quarter turn about the z-axis
+      |                                      [01;31m[K^~~[m[K
+      |                                      [32m[Ktan[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:253:13:[m[K [01;31m[Kerror: [m[Kinvalid use of ‘[01m[Kthis[m[K’ in non-member function
+  253 |             [01;31m[Kthis[m[K->openGripper(place_location[0].post_place_posture);
+      |             [01;31m[K^~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:256:13:[m[K [01;31m[Kerror: [m[Kinvalid use of ‘[01m[Kthis[m[K’ in non-member function
+  256 |             [01;31m[Kthis[m[K->move_group.setSupportSurfaceName("table2");
+      |             [01;31m[K^~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/planning.cpp:258:13:[m[K [01;31m[Kerror: [m[Kinvalid use of ‘[01m[Kthis[m[K’ in non-member function
+  258 |             [01;31m[Kthis[m[K->move_group.place("object", place_location);
+      |             [01;31m[K^~~~[m[K
+make[2]: *** [CMakeFiles/planning_node.dir/build.make:63: CMakeFiles/planning_node.dir/src/planning.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:235: CMakeFiles/planning_node.dir/all] Error 2
+make[1]: *** Waiting for unfinished jobs....
+make[2]: *** [CMakeFiles/run.dir/build.make:76: CMakeFiles/run.dir/src/planning.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:1585: CMakeFiles/run.dir/all] Error 2
+make: *** [Makefile:141: all] Error 2

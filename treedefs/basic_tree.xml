@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute = "MainTree">
+    <BehaviorTree ID="MainTree">
+        <Script code="prob:=0.0">
+        <Sequence> <!-- Sub Tree 3-->
+            <Sequence>
+                <Action ID="OrientOverKit">
+                <Sequence>
+                    <Condition ID="CheckOrient">
+                    <Action ID="SetProbability" message="{prob}">
+                    <Action ID="GatherData" message="{prob}">
+                </Sequence>
+            </Sequence>
+            <!-- <Action ID="PickObj"> -->
+            <Action ID="GotoLoc">            
+        </Sequence>
+        <Sequence> <!-- Sub Tree 2-->
+            <Condition ID="IsKitPresent">
+            <Action ID="HelpCheck">
+        </Sequence>
+        <Sequence> <!-- Sub Tree 3-->
+            <Sequence>
+                <Condition ID="CheckKitFree">
+                <Action ID="PlaceObj">
+            </Sequence>
+            <Condition ID="ObjPlacementCheck">
+            <Sequence>
+                <Action ID="Action1">
+                <Action ID="Action2">
+            </Sequence>
+        </Sequence>
+    </BehaviorTree>
+</root>

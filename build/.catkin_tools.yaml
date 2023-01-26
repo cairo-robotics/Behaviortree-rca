@@ -1,0 +1,6 @@
+devel_space: /home/dt/HRIPapers/BehaviorTreeWork/devel
+install: false
+install_space: /home/dt/HRIPapers/BehaviorTreeWork/install
+profile: default
+source_space: /home/dt/HRIPapers/BehaviorTreeWork/src
+workspace: /home/dt/HRIPapers/BehaviorTreeWork

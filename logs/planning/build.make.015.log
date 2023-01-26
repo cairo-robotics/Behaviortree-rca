@@ -1,0 +1,4 @@
+[ 50%] Built target planning
+[35m[1mScanning dependencies of target run[0m
+[ 75%] [32m[1mLinking CXX executable /home/dt/HRIPapers/BehaviorTreeWork/devel/.private/planning/lib/planning/run[0m
+[100%] Built target run
