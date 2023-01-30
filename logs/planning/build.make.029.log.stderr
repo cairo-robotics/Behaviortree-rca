@@ -1,0 +1,8 @@
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[Kvirtual BT::NodeStatus Pick::tick()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:25:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+   25 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[Kvirtual BT::NodeStatus gotoGoal::tick()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:60:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+   60 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K

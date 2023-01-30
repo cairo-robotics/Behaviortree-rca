@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
   "/home/dt/HRIPapers/BehaviorTreeWork/devel/.private/planning/lib/planning/run"
   "/home/dt/HRIPapers/BehaviorTreeWork/devel/.private/planning/lib/planning/run.pdb"
-  "CMakeFiles/run.dir/src/run.cpp.o"
+  "CMakeFiles/run.dir/src/BT_pnp.cpp.o"
 )
 
 # Per-language clean rules from dependency scanning.

@@ -20,6 +20,14 @@ BUILD_GMOCK:BOOL=ON
 //Build dynamically-linked binaries
 BUILD_SHARED_LIBS:BOOL=ON
 
+Boost_COROUTINE_LIBRARY_RELEASE:STRING=/usr/lib/x86_64-linux-gnu/libboost_coroutine.so.1.71.0
+
+//The directory containing a CMake configuration file for Boost.
+Boost_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/Boost-1.71.0
+
+//Path to a file.
+Boost_INCLUDE_DIR:PATH=/usr/include
+
 //catkin devel space
 CATKIN_DEVEL_PREFIX:PATH=/home/dt/HRIPapers/BehaviorTreeWork/devel/.private/planning
 
@@ -383,7 +391,25 @@ actionlib_msgs_DIR:PATH=/opt/ros/noetic/share/actionlib_msgs/cmake
 behaviortree_cpp_DIR:PATH=behaviortree_cpp_DIR-NOTFOUND
 
 //The directory containing a CMake configuration file for behaviortree_cpp_v3.
-behaviortree_cpp_v3_DIR:PATH=behaviortree_cpp_v3_DIR-NOTFOUND
+behaviortree_cpp_v3_DIR:PATH=/opt/ros/noetic/share/behaviortree_cpp_v3/cmake
+
+//The directory containing a CMake configuration file for boost_atomic.
+boost_atomic_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/boost_atomic-1.71.0
+
+//The directory containing a CMake configuration file for boost_chrono.
+boost_chrono_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/boost_chrono-1.71.0
+
+//The directory containing a CMake configuration file for boost_context.
+boost_context_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/boost_context-1.71.0
+
+//The directory containing a CMake configuration file for boost_coroutine.
+boost_coroutine_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/boost_coroutine-1.71.0
+
+//The directory containing a CMake configuration file for boost_headers.
+boost_headers_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/boost_headers-1.71.0
+
+//The directory containing a CMake configuration file for boost_thread.
+boost_thread_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/boost_thread-1.71.0
 
 //The directory containing a CMake configuration file for catkin.
 catkin_DIR:PATH=/opt/ros/noetic/share/catkin/cmake
@@ -480,7 +506,7 @@ interactive_markers_DIR:PATH=/opt/ros/noetic/share/interactive_markers/cmake
 kdl_parser_DIR:PATH=/opt/ros/noetic/share/kdl_parser/cmake
 
 //Path to a library.
-lib:FILEPATH=/opt/ros/noetic/lib/libxmlrpcpp.so
+lib:FILEPATH=/opt/ros/noetic/lib/libmoveit_move_group_capabilities_base.so
 
 //The directory containing a CMake configuration file for message_filters.
 message_filters_DIR:PATH=/opt/ros/noetic/share/message_filters/cmake
@@ -628,6 +654,8 @@ xmlrpcpp_DIR:PATH=/opt/ros/noetic/share/xmlrpcpp/cmake
 # INTERNAL cache entries
 ########################
 
+//ADVANCED property for variable: Boost_DIR
+Boost_DIR-ADVANCED:INTERNAL=1
 //catkin environment
 CATKIN_ENV:INTERNAL=/home/dt/HRIPapers/BehaviorTreeWork/build/planning/catkin_generated/env_cached.sh
 CATKIN_TEST_RESULTS_DIR:INTERNAL=/home/dt/HRIPapers/BehaviorTreeWork/build/planning/test_results
@@ -848,6 +876,18 @@ PYTHON_EXECUTABLE-ADVANCED:INTERNAL=1
 PYTHON_INSTALL_DIR:INTERNAL=lib/python3/dist-packages
 //CMAKE_INSTALL_PREFIX during last run
 _GNUInstallDirs_LAST_CMAKE_INSTALL_PREFIX:INTERNAL=/home/dt/HRIPapers/BehaviorTreeWork/install
+//ADVANCED property for variable: boost_atomic_DIR
+boost_atomic_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: boost_chrono_DIR
+boost_chrono_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: boost_context_DIR
+boost_context_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: boost_coroutine_DIR
+boost_coroutine_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: boost_headers_DIR
+boost_headers_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: boost_thread_DIR
+boost_thread_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: gmock_build_tests
 gmock_build_tests-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: gtest_build_samples

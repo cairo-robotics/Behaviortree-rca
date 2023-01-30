@@ -1,0 +1,40 @@
+[ 50%] Built target planning
+[35m[1mScanning dependencies of target run[0m
+[ 75%] [32mBuilding CXX object CMakeFiles/run.dir/src/BT_pnp.cpp.o[0m
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In constructor ‘[01m[KPick::Pick(const string&, const BT::NodeConfiguration&, my_planning::MyPlanningClass&)[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:20:58:[m[K [01;31m[Kerror: [m[Kcannot convert ‘[01m[Kmy_planning::MyPlanningClass[m[K’ to ‘[01m[Kmy_planning::MyPlanningClass*[m[K’ in initialization
+   20 |             : BT::SyncActionNode(name, config), planBase([01;31m[Kplanning[m[K)
+      |                                                          [01;31m[K^~~~~~~~[m[K
+      |                                                          [01;31m[K|[m[K
+      |                                                          [01;31m[Kmy_planning::MyPlanningClass[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[Kvirtual BT::NodeStatus Pick::tick()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:25:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+   25 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In constructor ‘[01m[KgotoGoal::gotoGoal(const string&, const BT::NodeConfiguration&, geometry_msgs::Pose&, my_planning::MyPlanningClass&)[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:56:56:[m[K [01;31m[Kerror: [m[Kcannot convert ‘[01m[Kgeometry_msgs::Pose[m[K’ {aka ‘[01m[Kgeometry_msgs::Pose_<std::allocator<void> >[m[K’} to ‘[01m[Kgeometry_msgs::Pose*[m[K’ {aka ‘[01m[Kgeometry_msgs::Pose_<std::allocator<void> >*[m[K’} in initialization
+   56 |         :   BT::SyncActionNode(name, config), goalPose([01;31m[Kpose[m[K){ }
+      |                                                        [01;31m[K^~~~[m[K
+      |                                                        [01;31m[K|[m[K
+      |                                                        [01;31m[Kgeometry_msgs::Pose {aka geometry_msgs::Pose_<std::allocator<void> >}[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[Kvirtual BT::NodeStatus gotoGoal::tick()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:59:44:[m[K [01;31m[Kerror: [m[Kno matching function for call to ‘[01m[Kmy_planning::MyPlanningClass::goToPoseGoal(geometry_msgs::Pose*&)[m[K’
+   59 |             planBase->goToPoseGoal(goalPose[01;31m[K)[m[K;
+      |                                            [01;31m[K^[m[K
+In file included from [01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:1[m[K:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/planning.h:26:18:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kvoid my_planning::MyPlanningClass::goToPoseGoal()[m[K’
+   26 |             void [01;36m[KgoToPoseGoal[m[K();
+      |                  [01;36m[K^~~~~~~~~~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/planning.h:26:18:[m[K [01;36m[Knote: [m[K  candidate expects 0 arguments, 1 provided
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/planning.h:27:18:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kvoid my_planning::MyPlanningClass::goToPoseGoal(geometry_msgs::Pose&)[m[K’
+   27 |             void [01;36m[KgoToPoseGoal[m[K(geometry_msgs::Pose &pose);
+      |                  [01;36m[K^~~~~~~~~~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/planning.h:27:52:[m[K [01;36m[Knote: [m[K  no known conversion for argument 1 from ‘[01m[Kgeometry_msgs::Pose*[m[K’ {aka ‘[01m[Kgeometry_msgs::Pose_<std::allocator<void> >*[m[K’} to ‘[01m[Kgeometry_msgs::Pose&[m[K’ {aka ‘[01m[Kgeometry_msgs::Pose_<std::allocator<void> >&[m[K’}
+   27 |             void goToPoseGoal([01;36m[Kgeometry_msgs::Pose &pose[m[K);
+      |                               [01;36m[K~~~~~~~~~~~~~~~~~~~~~^~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:60:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+   60 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+make[2]: *** [CMakeFiles/run.dir/build.make:63: CMakeFiles/run.dir/src/BT_pnp.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:1585: CMakeFiles/run.dir/all] Error 2
+make: *** [Makefile:141: all] Error 2

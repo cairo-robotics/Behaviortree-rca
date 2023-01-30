@@ -1519,6 +1519,33 @@ gtest/fast:
 	$(MAKE) -f gtest/googletest/CMakeFiles/gtest.dir/build.make gtest/googletest/CMakeFiles/gtest.dir/build
 .PHONY : gtest/fast
 
+src/BT_pnp.o: src/BT_pnp.cpp.o
+
+.PHONY : src/BT_pnp.o
+
+# target to build an object file
+src/BT_pnp.cpp.o:
+	$(MAKE) -f CMakeFiles/run.dir/build.make CMakeFiles/run.dir/src/BT_pnp.cpp.o
+.PHONY : src/BT_pnp.cpp.o
+
+src/BT_pnp.i: src/BT_pnp.cpp.i
+
+.PHONY : src/BT_pnp.i
+
+# target to preprocess a source file
+src/BT_pnp.cpp.i:
+	$(MAKE) -f CMakeFiles/run.dir/build.make CMakeFiles/run.dir/src/BT_pnp.cpp.i
+.PHONY : src/BT_pnp.cpp.i
+
+src/BT_pnp.s: src/BT_pnp.cpp.s
+
+.PHONY : src/BT_pnp.s
+
+# target to generate assembly for a file
+src/BT_pnp.cpp.s:
+	$(MAKE) -f CMakeFiles/run.dir/build.make CMakeFiles/run.dir/src/BT_pnp.cpp.s
+.PHONY : src/BT_pnp.cpp.s
+
 src/planning.o: src/planning.cpp.o
 
 .PHONY : src/planning.o
@@ -1545,33 +1572,6 @@ src/planning.s: src/planning.cpp.s
 src/planning.cpp.s:
 	$(MAKE) -f CMakeFiles/planning.dir/build.make CMakeFiles/planning.dir/src/planning.cpp.s
 .PHONY : src/planning.cpp.s
-
-src/run.o: src/run.cpp.o
-
-.PHONY : src/run.o
-
-# target to build an object file
-src/run.cpp.o:
-	$(MAKE) -f CMakeFiles/run.dir/build.make CMakeFiles/run.dir/src/run.cpp.o
-.PHONY : src/run.cpp.o
-
-src/run.i: src/run.cpp.i
-
-.PHONY : src/run.i
-
-# target to preprocess a source file
-src/run.cpp.i:
-	$(MAKE) -f CMakeFiles/run.dir/build.make CMakeFiles/run.dir/src/run.cpp.i
-.PHONY : src/run.cpp.i
-
-src/run.s: src/run.cpp.s
-
-.PHONY : src/run.s
-
-# target to generate assembly for a file
-src/run.cpp.s:
-	$(MAKE) -f CMakeFiles/run.dir/build.make CMakeFiles/run.dir/src/run.cpp.s
-.PHONY : src/run.cpp.s
 
 # Help Target
 help:
@@ -1690,12 +1690,12 @@ help:
 	@echo "... gmock"
 	@echo "... gtest_main"
 	@echo "... gtest"
+	@echo "... src/BT_pnp.o"
+	@echo "... src/BT_pnp.i"
+	@echo "... src/BT_pnp.s"
 	@echo "... src/planning.o"
 	@echo "... src/planning.i"
 	@echo "... src/planning.s"
-	@echo "... src/run.o"
-	@echo "... src/run.i"
-	@echo "... src/run.s"
 .PHONY : help
 
 

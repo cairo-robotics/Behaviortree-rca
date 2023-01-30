@@ -10,6 +10,9 @@ add_definitions(-std=c++11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+
+find_package(Boost COMPONENTS coroutine QUIET)
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp 
   behaviortree_cpp_v3
@@ -116,7 +119,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 
-add_executable(run src/run.cpp)
+add_executable(run src/BT_pnp.cpp)
 target_link_libraries(run ${catkin_LIBRARIES} planning)
 
 

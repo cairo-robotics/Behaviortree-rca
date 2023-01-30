@@ -16,12 +16,12 @@ class Pick : public BT::SyncActionNode{
             return ports;
         }
 
-        Pick(const std::string& name, const BT::NodeConfiguration& config, my_planning::MyPlanningClass& planning) 
+        Pick(const std::string& name, const BT::NodeConfiguration& config, my_planning::MyPlanningClass* planning) 
             : BT::SyncActionNode(name, config), planBase(planning)
         {}
 
         BT::NodeStatus tick() override{
-            planBase->pick();
+            planBase->Pick();
         }
         virtual BT::NodeStatus on_success()
         {
@@ -45,15 +45,15 @@ class Pick : public BT::SyncActionNode{
         {
             return BT::NodeStatus::SUCCESS;
         }
-}
+};
 
 class gotoGoal : public BT::SyncActionNode{
     public:
-        geometry_msgs::Pose* goalPose;
+        geometry_msgs::Pose& goalPose;
         my_planning::MyPlanningClass* planBase;
 
-        gotoGoal(const std::string& name, const BT::NodeConfiguration& config, geometry_msgs::Pose& pose, my_planning::MyPlanningClass& planning)
-        :   BT::SyncActionNode(name, config), goalPose(pose){ }
+        gotoGoal(const std::string& name, const BT::NodeConfiguration& config, geometry_msgs::Pose& pose, my_planning::MyPlanningClass* planning)
+        :   BT::SyncActionNode(name, config), goalPose(pose), planBase(planning){ }
 
         BT::NodeStatus tick() override{
             planBase->goToPoseGoal(goalPose);
@@ -80,7 +80,6 @@ class gotoGoal : public BT::SyncActionNode{
         {
             return BT::NodeStatus::SUCCESS;
         }
-}
+};
 
-
-class 
+int main(){}
