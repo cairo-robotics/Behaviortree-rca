@@ -1,0 +1,21 @@
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[Kvirtual BT::NodeStatus Pick::tick()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:28:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+   28 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[Kvirtual BT::NodeStatus gotoGoal::tick()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:63:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+   63 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[Kvirtual BT::NodeStatus DetectArucoPlaces::tick()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:108:75:[m[K [01;31m[Kerror: [m[Kinvalid use of non-static member function ‘[01m[Kvoid DetectArucoPlaces::DetectArucoPlacesCallback(aruco_msgs::MarkerArray_<std::allocator<void> >::Ptr)[m[K’
+  108 |             ros::Subscriber sub = nh_.subscribe("/name_of_topic", 1,[01;31m[Kthis->DetectArucoPlacesCallback[m[K);
+      |                                                                     [01;31m[K~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:97:14:[m[K [01;36m[Knote: [m[Kdeclared here
+   97 |         void [01;36m[KDetectArucoPlacesCallback[m[K(const aruco_msgs::MarkerArray::Ptr msg){
+      |              [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:109:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+  109 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+make[2]: *** [CMakeFiles/run.dir/build.make:63: CMakeFiles/run.dir/src/BT_pnp.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:1613: CMakeFiles/run.dir/all] Error 2
+make: *** [Makefile:141: all] Error 2

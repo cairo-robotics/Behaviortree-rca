@@ -5,4 +5,4 @@ Description: Description of planning
 Version: 0.0.0
 Cflags: -I/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include
 Libs: -L${prefix}/lib 
-Requires: roscpp moveit_core moveit_visual_tools moveit_ros_planning_interface
+Requires: roscpp moveit_core moveit_visual_tools moveit_ros_planning_interface aruco_ros

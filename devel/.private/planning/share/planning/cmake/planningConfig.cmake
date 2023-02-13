@@ -185,7 +185,7 @@ foreach(t ${planning_EXPORTED_TARGETS})
   endif()
 endforeach()
 
-set(depends "roscpp;moveit_core;moveit_visual_tools;moveit_ros_planning_interface")
+set(depends "roscpp;moveit_core;moveit_visual_tools;moveit_ros_planning_interface;aruco_ros")
 foreach(depend ${depends})
   string(REPLACE " " ";" depend_list ${depend})
   # the package name of the dependency must be kept in a unique variable so that it is not overwritten in recursive calls

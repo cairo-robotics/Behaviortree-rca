@@ -1,0 +1,26 @@
+In file included from [01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:2[m[K:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/aruco.h:14:6:[m[K [01;31m[Kerror: [m[Kexpected ‘[01m[K;[m[K’ after class definition
+   14 |     }
+      |      [01;31m[K^[m[K
+      |      [32m[K;[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[Kvirtual BT::NodeStatus Pick::tick()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:29:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+   29 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[Kvirtual BT::NodeStatus gotoGoal::tick()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:64:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+   64 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[Kvirtual BT::NodeStatus DetectArucoPlaces::tick()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:110:70:[m[K [01;31m[Kerror: [m[Kinvalid use of non-static member function ‘[01m[Kvirtual void DetectArucoPlaces::DetectArucoPlacesCallback(aruco_msgs::MarkerArray_<std::allocator<void> >::Ptr)[m[K’
+  110 |             ros::Subscriber sub = nh_.subscribe("/name_of_topic", 1, [01;31m[KDetectArucoPlacesCallback[m[K);
+      |                                                                      [01;31m[K^~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:99:22:[m[K [01;36m[Knote: [m[Kdeclared here
+   99 |         virtual void [01;36m[KDetectArucoPlacesCallback[m[K(const aruco_msgs::MarkerArray::Ptr msg){
+      |                      [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:111:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+  111 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+make[2]: *** [CMakeFiles/run.dir/build.make:63: CMakeFiles/run.dir/src/BT_pnp.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:1613: CMakeFiles/run.dir/all] Error 2
+make: *** [Makefile:141: all] Error 2

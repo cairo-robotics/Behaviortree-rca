@@ -387,6 +387,12 @@ actionlib_DIR:PATH=/opt/ros/noetic/share/actionlib/cmake
 //The directory containing a CMake configuration file for actionlib_msgs.
 actionlib_msgs_DIR:PATH=/opt/ros/noetic/share/actionlib_msgs/cmake
 
+//The directory containing a CMake configuration file for aruco.
+aruco_DIR:PATH=/opt/ros/noetic/share/aruco/cmake
+
+//The directory containing a CMake configuration file for aruco_ros.
+aruco_ros_DIR:PATH=/opt/ros/noetic/share/aruco_ros/cmake
+
 //The directory containing a CMake configuration file for behaviortree_cpp.
 behaviortree_cpp_DIR:PATH=behaviortree_cpp_DIR-NOTFOUND
 
@@ -506,7 +512,7 @@ interactive_markers_DIR:PATH=/opt/ros/noetic/share/interactive_markers/cmake
 kdl_parser_DIR:PATH=/opt/ros/noetic/share/kdl_parser/cmake
 
 //Path to a library.
-lib:FILEPATH=/opt/ros/noetic/lib/libmoveit_move_group_capabilities_base.so
+lib:FILEPATH=/opt/ros/noetic/lib/libaruco.so
 
 //The directory containing a CMake configuration file for message_filters.
 message_filters_DIR:PATH=/opt/ros/noetic/share/message_filters/cmake

@@ -1,0 +1,46 @@
+In file included from [01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:2[m[K:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/aruco.h:[m[K In member function ‘[01m[Kvoid callback::aruco_class::DetectArucoPlacesCallback(aruco_msgs::MarkerArray_<std::allocator<void> >::Ptr)[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/aruco.h:10:17:[m[K [01;31m[Kerror: [m[K‘[01m[KPoses[m[K’ was not declared in this scope
+   10 |                 [01;31m[KPoses[m[K.push_back(msg->markers[i].pose);
+      |                 [01;31m[K^~~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/aruco.h:11:17:[m[K [01;31m[Kerror: [m[K‘[01m[Klabels[m[K’ was not declared in this scope; did you mean ‘[01m[Klabs[m[K’?
+   11 |                 [01;31m[Klabels[m[K.push_back(msg->markers[i].id);
+      |                 [01;31m[K^~~~~~[m[K
+      |                 [32m[Klabs[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/aruco.h:[m[K In constructor ‘[01m[Kcallback::aruco_class::aruco_class()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/aruco.h:16:23:[m[K [01;31m[Kerror: [m[K‘[01m[Kargc[m[K’ was not declared in this scope
+   16 |             ros::init([01;31m[Kargc[m[K, argv,"custom_interfacing");
+      |                       [01;31m[K^~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/aruco.h:16:29:[m[K [01;31m[Kerror: [m[K‘[01m[Kargv[m[K’ was not declared in this scope
+   16 |             ros::init(argc, [01;31m[Kargv[m[K,"custom_interfacing");
+      |                             [01;31m[K^~~~[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/aruco.h:19:97:[m[K [01;31m[Kerror: [m[Kno match for ‘[01m[Koperator=[m[K’ (operand types are ‘[01m[Karuco_msgs::MarkerArray[m[K’ {aka ‘[01m[Karuco_msgs::MarkerArray_<std::allocator<void> >[m[K’} and ‘[01m[Kboost::shared_ptr<const aruco_msgs::MarkerArray_<std::allocator<void> > >[m[K’)
+   19 |                 aruco_array = ros::topic::waitForMessage<aruco_msgs::MarkerArray>("/aruco_topic"[01;31m[K)[m[K;
+      |                                                                                                 [01;31m[K^[m[K
+In file included from [01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/aruco.h:1[m[K,
+                 from [01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:2[m[K:
+[01m[K/opt/ros/noetic/include/aruco_msgs/MarkerArray.h:24:8:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Karuco_msgs::MarkerArray_<std::allocator<void> >& aruco_msgs::MarkerArray_<std::allocator<void> >::operator=(const aruco_msgs::MarkerArray_<std::allocator<void> >&)[m[K’
+   24 | struct [01;36m[KMarkerArray_[m[K
+      |        [01;36m[K^~~~~~~~~~~~[m[K
+[01m[K/opt/ros/noetic/include/aruco_msgs/MarkerArray.h:24:8:[m[K [01;36m[Knote: [m[K  no known conversion for argument 1 from ‘[01m[Kboost::shared_ptr<const aruco_msgs::MarkerArray_<std::allocator<void> > >[m[K’ to ‘[01m[Kconst aruco_msgs::MarkerArray_<std::allocator<void> >&[m[K’
+[01m[K/opt/ros/noetic/include/aruco_msgs/MarkerArray.h:24:8:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Karuco_msgs::MarkerArray_<std::allocator<void> >& aruco_msgs::MarkerArray_<std::allocator<void> >::operator=(aruco_msgs::MarkerArray_<std::allocator<void> >&&)[m[K’
+[01m[K/opt/ros/noetic/include/aruco_msgs/MarkerArray.h:24:8:[m[K [01;36m[Knote: [m[K  no known conversion for argument 1 from ‘[01m[Kboost::shared_ptr<const aruco_msgs::MarkerArray_<std::allocator<void> > >[m[K’ to ‘[01m[Karuco_msgs::MarkerArray_<std::allocator<void> >&&[m[K’
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[KBT::NodeStatus Actions::Pick(my_planning::MyPlanningClass*)[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:21:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+   21 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[KBT::NodeStatus Actions::gotoGoal(geometry_msgs::Pose&, my_planning::MyPlanningClass*)[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:24:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+   24 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[KBT::NodeStatus Actions::Place(my_planning::MyPlanningClass*)[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:28:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+   28 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:[m[K In member function ‘[01m[KBT::NodeStatus Actions::DetectArucoMarkers()[m[K’:
+[01m[K/home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp:36:9:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K-Wreturn-type[m[K]
+   36 |         [01;35m[K}[m[K
+      |         [01;35m[K^[m[K
+make[2]: *** [CMakeFiles/run.dir/build.make:63: CMakeFiles/run.dir/src/BT_pnp.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:1613: CMakeFiles/run.dir/all] Error 2
+make: *** [Makefile:141: all] Error 2

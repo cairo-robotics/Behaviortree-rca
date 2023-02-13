@@ -6,6 +6,10 @@
 
 #IncludeRegexTransform: 
 
+/home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/aruco.h
+aruco_msgs/MarkerArray.h
+-
+
 /home/dt/HRIPapers/BehaviorTreeWork/src/planning/include/planning.h
 moveit/move_group_interface/move_group_interface.h
 -
@@ -26,6 +30,18 @@ moveit_msgs/CollisionObject.h
 
 /home/dt/HRIPapers/BehaviorTreeWork/src/planning/src/BT_pnp.cpp
 planning.h
+-
+aruco.h
+-
+aruco_msgs/MarkerArray.h
+-
+boost/bind.hpp
+-
+boost/shared_ptr.hpp
+-
+boost/function.hpp
+-
+geometry_msgs/PoseWithCovariance.h
 -
 behaviortree_cpp_v3/behavior_tree.h
 -
@@ -260,6 +276,46 @@ ros/message_operations.h
 std_msgs/Header.h
 -
 actionlib_msgs/GoalStatus.h
+-
+
+/opt/ros/noetic/include/aruco_msgs/Marker.h
+string
+-
+vector
+-
+memory
+-
+ros/types.h
+-
+ros/serialization.h
+-
+ros/builtin_message_traits.h
+-
+ros/message_operations.h
+-
+std_msgs/Header.h
+-
+geometry_msgs/PoseWithCovariance.h
+-
+
+/opt/ros/noetic/include/aruco_msgs/MarkerArray.h
+string
+-
+vector
+-
+memory
+-
+ros/types.h
+-
+ros/serialization.h
+-
+ros/builtin_message_traits.h
+-
+ros/message_operations.h
+-
+std_msgs/Header.h
+-
+aruco_msgs/Marker.h
 -
 
 /opt/ros/noetic/include/behaviortree_cpp_v3/action_node.h

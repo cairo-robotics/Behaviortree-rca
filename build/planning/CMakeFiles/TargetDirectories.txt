@@ -3,6 +3,7 @@
 /home/dt/HRIPapers/BehaviorTreeWork/build/planning/CMakeFiles/list_install_components.dir
 /home/dt/HRIPapers/BehaviorTreeWork/build/planning/CMakeFiles/test.dir
 /home/dt/HRIPapers/BehaviorTreeWork/build/planning/CMakeFiles/planning.dir
+/home/dt/HRIPapers/BehaviorTreeWork/build/planning/CMakeFiles/aruco_ros_gencfg.dir
 /home/dt/HRIPapers/BehaviorTreeWork/build/planning/CMakeFiles/std_srvs_generate_messages_nodejs.dir
 /home/dt/HRIPapers/BehaviorTreeWork/build/planning/CMakeFiles/std_srvs_generate_messages_lisp.dir
 /home/dt/HRIPapers/BehaviorTreeWork/build/planning/CMakeFiles/std_srvs_generate_messages_eus.dir

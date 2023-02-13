@@ -23,6 +23,10 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/opt/ros/noetic/share/actionlib_msgs/cmake/actionlib_msgs-msg-extras.cmake"
   "/opt/ros/noetic/share/actionlib_msgs/cmake/actionlib_msgsConfig-version.cmake"
   "/opt/ros/noetic/share/actionlib_msgs/cmake/actionlib_msgsConfig.cmake"
+  "/opt/ros/noetic/share/aruco/cmake/arucoConfig-version.cmake"
+  "/opt/ros/noetic/share/aruco/cmake/arucoConfig.cmake"
+  "/opt/ros/noetic/share/aruco_ros/cmake/aruco_rosConfig-version.cmake"
+  "/opt/ros/noetic/share/aruco_ros/cmake/aruco_rosConfig.cmake"
   "/opt/ros/noetic/share/behaviortree_cpp_v3/cmake/behaviortree_cpp_v3Config-version.cmake"
   "/opt/ros/noetic/share/behaviortree_cpp_v3/cmake/behaviortree_cpp_v3Config.cmake"
   "/opt/ros/noetic/share/catkin/cmake/all.cmake"
@@ -345,6 +349,7 @@ set(CMAKE_MAKEFILE_PRODUCTS
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/planning.dir/DependInfo.cmake"
+  "CMakeFiles/aruco_ros_gencfg.dir/DependInfo.cmake"
   "CMakeFiles/std_srvs_generate_messages_nodejs.dir/DependInfo.cmake"
   "CMakeFiles/std_srvs_generate_messages_lisp.dir/DependInfo.cmake"
   "CMakeFiles/std_srvs_generate_messages_eus.dir/DependInfo.cmake"

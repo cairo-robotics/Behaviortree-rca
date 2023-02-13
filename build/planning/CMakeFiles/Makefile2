@@ -66,6 +66,7 @@ preinstall: gtest/preinstall
 
 # The main recursive "clean" target.
 clean: CMakeFiles/planning.dir/clean
+clean: CMakeFiles/aruco_ros_gencfg.dir/clean
 clean: CMakeFiles/std_srvs_generate_messages_nodejs.dir/clean
 clean: CMakeFiles/std_srvs_generate_messages_lisp.dir/clean
 clean: CMakeFiles/std_srvs_generate_messages_eus.dir/clean
@@ -252,6 +253,33 @@ planning: CMakeFiles/planning.dir/rule
 CMakeFiles/planning.dir/clean:
 	$(MAKE) -f CMakeFiles/planning.dir/build.make CMakeFiles/planning.dir/clean
 .PHONY : CMakeFiles/planning.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/aruco_ros_gencfg.dir
+
+# All Build rule for target.
+CMakeFiles/aruco_ros_gencfg.dir/all:
+	$(MAKE) -f CMakeFiles/aruco_ros_gencfg.dir/build.make CMakeFiles/aruco_ros_gencfg.dir/depend
+	$(MAKE) -f CMakeFiles/aruco_ros_gencfg.dir/build.make CMakeFiles/aruco_ros_gencfg.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/dt/HRIPapers/BehaviorTreeWork/build/planning/CMakeFiles --progress-num= "Built target aruco_ros_gencfg"
+.PHONY : CMakeFiles/aruco_ros_gencfg.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/aruco_ros_gencfg.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/dt/HRIPapers/BehaviorTreeWork/build/planning/CMakeFiles 0
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/aruco_ros_gencfg.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/dt/HRIPapers/BehaviorTreeWork/build/planning/CMakeFiles 0
+.PHONY : CMakeFiles/aruco_ros_gencfg.dir/rule
+
+# Convenience name for target.
+aruco_ros_gencfg: CMakeFiles/aruco_ros_gencfg.dir/rule
+
+.PHONY : aruco_ros_gencfg
+
+# clean rule for target.
+CMakeFiles/aruco_ros_gencfg.dir/clean:
+	$(MAKE) -f CMakeFiles/aruco_ros_gencfg.dir/build.make CMakeFiles/aruco_ros_gencfg.dir/clean
+.PHONY : CMakeFiles/aruco_ros_gencfg.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/std_srvs_generate_messages_nodejs.dir

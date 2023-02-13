@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_visual_tools
   moveit_ros_planning
   moveit_ros_planning_interface
+  aruco_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -93,6 +94,7 @@ catkin_package(
   moveit_core
   moveit_visual_tools
   moveit_ros_planning_interface
+  aruco_ros
 )
 
 
@@ -108,6 +110,7 @@ add_library(planning SHARED src/planning.cpp include/planning.h)
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 ## Add cmake target dependencies of the library
@@ -120,7 +123,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 
 add_executable(run src/BT_pnp.cpp)
-target_link_libraries(run ${catkin_LIBRARIES} planning)
+target_link_libraries(run ${catkin_LIBRARIES} planning ${Boost_LIBRARIES})
 
 
 ## Rename C++ executable without prefix

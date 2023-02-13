@@ -181,6 +181,19 @@ planning/fast:
 .PHONY : planning/fast
 
 #=============================================================================
+# Target rules for targets named aruco_ros_gencfg
+
+# Build rule for target.
+aruco_ros_gencfg: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 aruco_ros_gencfg
+.PHONY : aruco_ros_gencfg
+
+# fast build rule for target.
+aruco_ros_gencfg/fast:
+	$(MAKE) -f CMakeFiles/aruco_ros_gencfg.dir/build.make CMakeFiles/aruco_ros_gencfg.dir/build
+.PHONY : aruco_ros_gencfg/fast
+
+#=============================================================================
 # Target rules for targets named std_srvs_generate_messages_nodejs
 
 # Build rule for target.
@@ -1584,6 +1597,7 @@ help:
 	@echo "... list_install_components"
 	@echo "... test"
 	@echo "... planning"
+	@echo "... aruco_ros_gencfg"
 	@echo "... std_srvs_generate_messages_nodejs"
 	@echo "... std_srvs_generate_messages_lisp"
 	@echo "... std_srvs_generate_messages_eus"

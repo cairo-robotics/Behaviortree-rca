@@ -54,12 +54,14 @@
   <build_depend>moveit_core</build_depend>
   <build_depend>moveit_visual_tools</build_depend>
   <build_depend>moveit_ros_planning</build_depend>
+  <build_depend>aruco_ros</build_depend>
   <build_export_depend>roscpp</build_export_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>moveit_ros_planning_interface</exec_depend>
   <exec_depend>moveit_core</exec_depend>
   <exec_depend>moveit_visual_tools</exec_depend>
   <exec_depend>moveit_ros_planning</exec_depend>
+  <exec_depend>aruco_ros</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
