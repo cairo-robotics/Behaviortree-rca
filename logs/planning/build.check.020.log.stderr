@@ -1,6 +1,0 @@
-[31m[1mCMake Error[0m at /home/dt/HRIPapers/BehaviorTreeWork/src/planning/CMakeLists.txt:119 (target_link_libraries):
-  Cannot specify link libraries for target "planning_node" which is not built
-  by this project.
-
-
-make: *** [Makefile:1730: cmake_check_build_system] Error 1
