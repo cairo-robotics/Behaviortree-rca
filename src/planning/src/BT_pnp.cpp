@@ -10,31 +10,181 @@
 #include <behaviortree_cpp_v3/action_node.h>
 
 using namespace BT;
+namespace PnPNamespace{
+    my_planning::MyPlanningClass* planBase;
+    geometry_msgs::Pose goalPose;    
+    std::vector<int> Arucolabels;
+    std::vector<geometry_msgs::PoseWithCovariance> ArucoPoses;
 
-class Actions{
-        std::vector<int> Arucolabels;
-        std::vector<geometry_msgs::PoseWithCovariance> ArucoPoses;
 
-    public:
-        BT::NodeStatus Pick(my_planning::MyPlanningClass* planBase){
+    void setPlannerforNamespace(my_planning::MyPlanningClass* planning){
+        planBase = planning;
+    }
+
+    void setGoalforNamespace(geometry_msgs::Pose goalVal){
+        goalPose = goalVal;
+    }
+
+    class Pick : public BT::SyncActionNode{
+        public:
+        Pick(const std::string& name, const BT::NodeConfiguration& config) 
+            : BT::SyncActionNode(name, config)
+        {}
+
+        BT::NodeStatus tick() override{
             planBase->Pick();
         }
-        BT::NodeStatus gotoGoal(geometry_msgs::Pose& goalPose, my_planning::MyPlanningClass* planBase){
+        virtual BT::NodeStatus on_success()
+        {
+            return BT::NodeStatus::SUCCESS;
+        }
+
+        /**
+        * @brief Function to perform some user-defined operation whe the action is aborted.
+        * @return BT::NodeStatus Returns FAILURE by default, user may override return another value
+        */
+        virtual BT::NodeStatus on_aborted()
+        {
+            return BT::NodeStatus::FAILURE;
+        }
+
+        /**
+        * @brief Function to perform some user-defined operation when the action is cancelled.
+        * @return BT::NodeStatus Returns SUCCESS by default, user may override return another value
+        */
+        virtual BT::NodeStatus on_cancelled()
+        {
+            return BT::NodeStatus::SUCCESS;
+        }
+
+        static BT::PortsList providedPorts()
+        {
+            return{};
+        }
+
+    };
+
+    class gotoGoal : public BT::SyncActionNode{
+        public:
+         gotoGoal(const std::string& name, const BT::NodeConfiguration& config) 
+            : BT::SyncActionNode(name, config)
+        {}
+
+        BT::NodeStatus tick() override{
             planBase->goToPoseGoal(goalPose);
         }
+        virtual BT::NodeStatus on_success()
+        {
+            return BT::NodeStatus::SUCCESS;
+        }
 
-        BT::NodeStatus Place(my_planning::MyPlanningClass* planBase){
+        /**
+        * @brief Function to perform some user-defined operation whe the action is aborted.
+        * @return BT::NodeStatus Returns FAILURE by default, user may override return another value
+        */
+        virtual BT::NodeStatus on_aborted()
+        {
+            return BT::NodeStatus::FAILURE;
+        }
+
+        /**
+        * @brief Function to perform some user-defined operation when the action is cancelled.
+        * @return BT::NodeStatus Returns SUCCESS by default, user may override return another value
+        */
+        virtual BT::NodeStatus on_cancelled()
+        {
+            return BT::NodeStatus::SUCCESS;
+        }
+
+        static BT::PortsList providedPorts()
+        {
+            return{};
+        }
+    };
+
+
+    class Place : public BT::SyncActionNode{
+        public:
+         Place(const std::string& name, const BT::NodeConfiguration& config) 
+            : BT::SyncActionNode(name, config)
+        {}
+
+        BT::NodeStatus tick() override{
             planBase->Place();
         }
-
-        BT::NodeStatus DetectArucoMarkers(){
-            callback::aruco_class myArucos;
-            for(int i = 0; i < myArucos.aruco_array.markers.size(); i++){
-                ArucoPoses.push_back(myArucos.aruco_array.markers[i].pose);
-                Arucolabels.push_back(myArucos.aruco_array.markers[i].id);
-            }
+        virtual BT::NodeStatus on_success()
+        {
+            return BT::NodeStatus::SUCCESS;
         }
-};
+
+        /**
+        * @brief Function to perform some user-defined operation whe the action is aborted.
+        * @return BT::NodeStatus Returns FAILURE by default, user may override return another value
+        */
+        virtual BT::NodeStatus on_aborted()
+        {
+            return BT::NodeStatus::FAILURE;
+        }
+
+        /**
+        * @brief Function to perform some user-defined operation when the action is cancelled.
+        * @return BT::NodeStatus Returns SUCCESS by default, user may override return another value
+        */
+        virtual BT::NodeStatus on_cancelled()
+        {
+            return BT::NodeStatus::SUCCESS;
+        }
+
+        static BT::PortsList providedPorts()
+        {
+            return{};
+        }
+    };
+
+    class DetectArucoMarkers : public BT::SyncActionNode{
+        public:
+            DetectArucoMarkers(const std::string& name, const BT::NodeConfiguration& config)            
+            : BT::SyncActionNode(name, config)
+            { }
+
+            BT::NodeStatus tick() override{
+                callback::aruco_class myArucos;
+                for(int i = 0; i < myArucos.aruco_array.markers.size(); i++){
+                    ArucoPoses.push_back(myArucos.aruco_array.markers[i].pose);
+                    Arucolabels.push_back(myArucos.aruco_array.markers[i].id);
+                }
+            }
+
+            virtual BT::NodeStatus on_success()
+            {
+                return BT::NodeStatus::SUCCESS;
+            }
+
+            /**
+            * @brief Function to perform some user-defined operation whe the action is aborted.
+            * @return BT::NodeStatus Returns FAILURE by default, user may override return another value
+            */
+            virtual BT::NodeStatus on_aborted()
+            {
+                return BT::NodeStatus::FAILURE;
+            }
+
+            /**
+            * @brief Function to perform some user-defined operation when the action is cancelled.
+            * @return BT::NodeStatus Returns SUCCESS by default, user may override return another value
+            */
+            virtual BT::NodeStatus on_cancelled()
+            {
+                return BT::NodeStatus::SUCCESS;
+            }
+
+            static BT::PortsList providedPorts()
+            {
+                return{};
+            }
+    };
+
+}
 
 // static const char* xml_text = R"(
 //  <root BTCPP_format="3">
@@ -48,7 +198,10 @@ class Actions{
 //  )";
 
 int main(){
-    // BehaviorTreeFactory factory;
+    BehaviorTreeFactory factory;
     // factory.registerNodeType<gotoGoal>("gotoGoal");
-    // factory.registerSimpleAction("Pick", std::bind(Pick,this));
+    my_planning::MyPlanningClass planning;
+    PnPNamespace::setPlannerforNamespace(&planning);
+    factory.registerNodeType<PnPNamespace::Pick>("Pick");
+    return 0;
 }
