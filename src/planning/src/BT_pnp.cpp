@@ -141,48 +141,48 @@ namespace PnPNamespace{
         }
     };
 
-    class DetectArucoMarkers : public BT::SyncActionNode{
-        public:
-            DetectArucoMarkers(const std::string& name, const BT::NodeConfiguration& config)            
-            : BT::SyncActionNode(name, config)
-            { }
+    // class DetectArucoMarkers : public BT::SyncActionNode{
+    //     public:
+    //         DetectArucoMarkers(const std::string& name, const BT::NodeConfiguration& config)            
+    //         : BT::SyncActionNode(name, config)
+    //         { }
 
-            BT::NodeStatus tick() override{
-                callback::aruco_class myArucos;
-                for(int i = 0; i < myArucos.aruco_array.markers.size(); i++){
-                    ArucoPoses.push_back(myArucos.aruco_array.markers[i].pose);
-                    Arucolabels.push_back(myArucos.aruco_array.markers[i].id);
-                }
-            }
+    //         BT::NodeStatus tick() override{
+    //             callback::aruco_class myArucos;
+    //             for(int i = 0; i < myArucos.aruco_array.markers.size(); i++){
+    //                 ArucoPoses.push_back(myArucos.aruco_array.markers[i].pose);
+    //                 Arucolabels.push_back(myArucos.aruco_array.markers[i].id);
+    //             }
+    //         }
 
-            virtual BT::NodeStatus on_success()
-            {
-                return BT::NodeStatus::SUCCESS;
-            }
+    //         virtual BT::NodeStatus on_success()
+    //         {
+    //             return BT::NodeStatus::SUCCESS;
+    //         }
 
-            /**
-            * @brief Function to perform some user-defined operation whe the action is aborted.
-            * @return BT::NodeStatus Returns FAILURE by default, user may override return another value
-            */
-            virtual BT::NodeStatus on_aborted()
-            {
-                return BT::NodeStatus::FAILURE;
-            }
+    //         /**
+    //         * @brief Function to perform some user-defined operation whe the action is aborted.
+    //         * @return BT::NodeStatus Returns FAILURE by default, user may override return another value
+    //         */
+    //         virtual BT::NodeStatus on_aborted()
+    //         {
+    //             return BT::NodeStatus::FAILURE;
+    //         }
 
-            /**
-            * @brief Function to perform some user-defined operation when the action is cancelled.
-            * @return BT::NodeStatus Returns SUCCESS by default, user may override return another value
-            */
-            virtual BT::NodeStatus on_cancelled()
-            {
-                return BT::NodeStatus::SUCCESS;
-            }
+    //         /**
+    //         * @brief Function to perform some user-defined operation when the action is cancelled.
+    //         * @return BT::NodeStatus Returns SUCCESS by default, user may override return another value
+    //         */
+    //         virtual BT::NodeStatus on_cancelled()
+    //         {
+    //             return BT::NodeStatus::SUCCESS;
+    //         }
 
-            static BT::PortsList providedPorts()
-            {
-                return{};
-            }
-    };
+    //         static BT::PortsList providedPorts()
+    //         {
+    //             return{};
+    //         }
+    // };
 
 }
 
@@ -197,11 +197,17 @@ namespace PnPNamespace{
 //  </root>
 //  )";
 
-int main(){
+int main(int argc, char **argv){
+    ros::init(argc, argv, "custom_interfacing");
+    ros::NodeHandle node_handle;
+    ros::AsyncSpinner spinner(2);
+    spinner.start();
+
     BehaviorTreeFactory factory;
     // factory.registerNodeType<gotoGoal>("gotoGoal");
     my_planning::MyPlanningClass planning;
     PnPNamespace::setPlannerforNamespace(&planning);
     factory.registerNodeType<PnPNamespace::Pick>("Pick");
+    spinner.stop();
     return 0;
 }
