@@ -16,7 +16,6 @@ namespace PnPNamespace{
     std::vector<int> Arucolabels;
     std::vector<geometry_msgs::PoseWithCovariance> ArucoPoses;
 
-
     void setPlannerforNamespace(my_planning::MyPlanningClass* planning){
         planBase = planning;
     }
@@ -32,7 +31,9 @@ namespace PnPNamespace{
         {}
 
         BT::NodeStatus tick() override{
+            std::cout << "Strating picking operation ... " << std::endl;
             planBase->Pick();
+            return BT::NodeStatus::SUCCESS;
         }
         virtual BT::NodeStatus on_success()
         {
@@ -141,73 +142,80 @@ namespace PnPNamespace{
         }
     };
 
-    // class DetectArucoMarkers : public BT::SyncActionNode{
-    //     public:
-    //         DetectArucoMarkers(const std::string& name, const BT::NodeConfiguration& config)            
-    //         : BT::SyncActionNode(name, config)
-    //         { }
+    class DetectArucoMarkers : public BT::SyncActionNode{
+        public:
+            DetectArucoMarkers(const std::string& name, const BT::NodeConfiguration& config)            
+            : BT::SyncActionNode(name, config)
+            { }
 
-    //         BT::NodeStatus tick() override{
-    //             callback::aruco_class myArucos;
-    //             for(int i = 0; i < myArucos.aruco_array.markers.size(); i++){
-    //                 ArucoPoses.push_back(myArucos.aruco_array.markers[i].pose);
-    //                 Arucolabels.push_back(myArucos.aruco_array.markers[i].id);
-    //             }
-    //         }
+            BT::NodeStatus tick() override{
+                callback::aruco_class myArucos;
+                for(int i = 0; i < myArucos.aruco_array.markers.size(); i++){
+                    ArucoPoses.push_back(myArucos.aruco_array.markers[i].pose);
+                    Arucolabels.push_back(myArucos.aruco_array.markers[i].id);
+                }
+            }
 
-    //         virtual BT::NodeStatus on_success()
-    //         {
-    //             return BT::NodeStatus::SUCCESS;
-    //         }
+            virtual BT::NodeStatus on_success()
+            {
+                return BT::NodeStatus::SUCCESS;
+            }
 
-    //         /**
-    //         * @brief Function to perform some user-defined operation whe the action is aborted.
-    //         * @return BT::NodeStatus Returns FAILURE by default, user may override return another value
-    //         */
-    //         virtual BT::NodeStatus on_aborted()
-    //         {
-    //             return BT::NodeStatus::FAILURE;
-    //         }
+            /**
+            * @brief Function to perform some user-defined operation whe the action is aborted.
+            * @return BT::NodeStatus Returns FAILURE by default, user may override return another value
+            */
+            virtual BT::NodeStatus on_aborted()
+            {
+                return BT::NodeStatus::FAILURE;
+            }
 
-    //         /**
-    //         * @brief Function to perform some user-defined operation when the action is cancelled.
-    //         * @return BT::NodeStatus Returns SUCCESS by default, user may override return another value
-    //         */
-    //         virtual BT::NodeStatus on_cancelled()
-    //         {
-    //             return BT::NodeStatus::SUCCESS;
-    //         }
+            /**
+            * @brief Function to perform some user-defined operation when the action is cancelled.
+            * @return BT::NodeStatus Returns SUCCESS by default, user may override return another value
+            */
+            virtual BT::NodeStatus on_cancelled()
+            {
+                return BT::NodeStatus::SUCCESS;
+            }
 
-    //         static BT::PortsList providedPorts()
-    //         {
-    //             return{};
-    //         }
-    // };
+            static BT::PortsList providedPorts()
+            {
+                return{};
+            }
+    };
 
 }
 
-// static const char* xml_text = R"(
-//  <root BTCPP_format="3">
-//      <BehaviorTree>
-//         <Sequence>
-//             <Action_A/>
-//             <Action_B/>
-//         </Sequence>
-//      </BehaviorTree>
-//  </root>
-//  )";
+static const char* xml_text = R"(
+ <root BTCPP_format="3">
+     <BehaviorTree>
+        <Sequence>
+            <Pick/>
+        </Sequence>
+     </BehaviorTree>
+ </root>
+ )";
 
 int main(int argc, char **argv){
-    ros::init(argc, argv, "custom_interfacing");
-    ros::NodeHandle node_handle;
+    ros::init(argc, argv, "BehaviorTreeNode");
+    ros::NodeHandle nh_;
     ros::AsyncSpinner spinner(2);
     spinner.start();
 
     BehaviorTreeFactory factory;
-    // factory.registerNodeType<gotoGoal>("gotoGoal");
     my_planning::MyPlanningClass planning;
     PnPNamespace::setPlannerforNamespace(&planning);
+    geometry_msgs::Pose target_pose1;
+    target_pose1.orientation.w = 1.0;
+    target_pose1.position.x = 0.38;
+    target_pose1.position.y = -0.2;
+    target_pose1.position.z = 0.65;
+    PnPNamespace::setGoalforNamespace(target_pose1);
+    factory.registerNodeType<PnPNamespace::gotoGoal>("gotoGoal");
     factory.registerNodeType<PnPNamespace::Pick>("Pick");
+    auto tree = factory.createTreeFromText(xml_text);
+    tree.tickRoot();
     spinner.stop();
     return 0;
 }

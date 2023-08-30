@@ -143,8 +143,8 @@ namespace my_planning
             // BEGIN_SUB_TUTORIAL closed_gripper
             /* Add both finger joints of panda robot. */
             posture.joint_names.resize(2);
-            posture.joint_names[0] = "right_gripper_l_finger_joint"; //TODO Change names
-            posture.joint_names[1] = "right_gripper_r_finger_joint";
+            posture.joint_names[0] = "right_gripper_l_finger"; //TODO Change names
+            posture.joint_names[1] = "right_gripper_r_finger";
 
             /* Set them as closed. */
             posture.points.resize(1);
@@ -155,12 +155,14 @@ namespace my_planning
         }
 
         void MyPlanningClass::openGripper(trajectory_msgs::JointTrajectory& posture)
-        {
+        {   
+            std::cout << this->PLANNING_GROUP << std::endl;
+            // std::cout << move_group.Options.group_name_ << std::endl;
             // BEGIN_SUB_TUTORIAL open_gripper
             /* Add both finger joints of panda robot. */
             posture.joint_names.resize(2);
-            posture.joint_names[0] = "right_gripper_l_finger_joint"; //TODO Change names
-            posture.joint_names[1] = "right_gripper_r_finger_joint";
+            posture.joint_names[0] = "right_gripper_l_finger_tip"; //TODO Change names
+            posture.joint_names[1] = "right_gripper_r_finger_tip";
 
             /* Set them as open, wide enough for the object to fit. */
             posture.points.resize(1);
@@ -173,10 +175,12 @@ namespace my_planning
         void MyPlanningClass::Pick(){
             // Create a vector of grasps to be attempted, currently only creating single grasp.
             // This is essentially useful when using a grasp generator to generate and test multiple grasps.
+            moveit_msgs::Grasp n1;
             std::vector<moveit_msgs::Grasp> grasps;
+            std::cout << "Resizing Grasps" << std::endl;
             grasps.resize(1);
-         
-            grasps[0].grasp_pose.header.frame_id = "right_l0"; // This link needs to be the base link
+            
+            grasps[0].grasp_pose.header.frame_id = "right_l6"; // This link needs to be the base link
             tf2::Quaternion orientation;
             orientation.setRPY(-this->tau / 4, -this->tau / 8, -this->tau / 4);
             grasps[0].grasp_pose.pose.orientation = tf2::toMsg(orientation);
@@ -184,13 +188,12 @@ namespace my_planning
             grasps[0].grasp_pose.pose.position.y = this->pick1.position.y;
             grasps[0].grasp_pose.pose.position.z = this->pick1.position.z;
 
-
-            grasps[0].pre_grasp_approach.direction.header.frame_id = "right_l0";
+            grasps[0].pre_grasp_approach.direction.header.frame_id = "right_l6";
             grasps[0].pre_grasp_approach.direction.vector.x = 1.0;
             grasps[0].pre_grasp_approach.min_distance = 0.095;
             grasps[0].pre_grasp_approach.desired_distance = 0.115;
 
-            grasps[0].post_grasp_retreat.direction.header.frame_id = "right_l0";
+            grasps[0].post_grasp_retreat.direction.header.frame_id = "right_l6";
             /* Direction is set as positive z axis */
             grasps[0].post_grasp_retreat.direction.vector.z = 1.0;
             grasps[0].post_grasp_retreat.min_distance = 0.1;
@@ -199,6 +202,7 @@ namespace my_planning
             this->openGripper(grasps[0].pre_grasp_posture);
 
             this->closedGripper(grasps[0].grasp_posture);
+            std::cout << "Grasps: " << grasps[0] << std::endl;
 
             this->move_group.setSupportSurfaceName("table1");
 
