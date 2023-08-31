@@ -1,10 +1,6 @@
-import argparse
-import struct
-import sys
 import copy
 
 import rospy
-import rospkg
 
 from geometry_msgs.msg import (
     PoseStamped,
@@ -159,13 +155,31 @@ class PickAndPlace(object):
         return self.pick(request.pose)
 
     def pick_srv(self, pickPos):
-        
         rospy.init_node("PickService")
         service     =   rospy.service("Picking", pickPos, self.pick_srv_callback)
+        return service
 
     def place_srv_callback(self, request):
         return self.pick(request.pose)
 
     def place_srv(self, placePos):
         rospy.init_node("PickService")
-        service     =   rospy.service("Picking", placePos, self.place_srv_callback)
+        service     =   rospy.service("Placing", placePos, self.place_srv_callback)
+        return service
+    
+    def move_to_joint_posn_callback(self, joint_angles):
+        return self.move_to_start(joint_angles)
+    
+    def move_to_joint_posn_srv(self, joint_angles):
+        rospy.init_node("MoveToJointPosn")
+        service     =   rospy.service("MoveToJointPosn", joint_angles, self.move_to_joint_posn_callback)
+        return service
+
+def main():
+    tt = PickAndPlace() 
+    srv1 = tt.pick_srv()
+    srv2 = tt.place_srv()
+    srv3 = tt.move_to_joint_posn_srv()
+    rospy.spin()
+
+main()
