@@ -1,3 +1,5 @@
 werkzeug==2.0.3
 open3d-cpu
 pyrealsense2
+trimesh
+https://github.com/wjakob/instant-meshes/blob/master/resources/im.py
