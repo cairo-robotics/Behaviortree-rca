@@ -54,7 +54,7 @@ def butter_lowpass_filtfilt(data, cutoff=1500, fs=50000, order=5):
     return filtfilt(b, a, data)  # forward-backward filter
 
 
-def plot_one_box(x, img, color=None, label=None, line_thickness=3):
+def plot_one_box(x, img, color=(255, 0, 0), label=None, line_thickness=3):
     # Plots one bounding box on image img
     tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
     color = color or [random.randint(0, 255) for _ in range(3)]
@@ -64,11 +64,12 @@ def plot_one_box(x, img, color=None, label=None, line_thickness=3):
         tf = max(tl - 1, 1)  # font thickness
         t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
         c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
-        cv2.rectangle(img, c1, c2, color, -1, cv2.LINE_AA)  # filled
+        print(np.shape(img))
+        cv2.rectangle(img, c1, c2, color, 1, cv2.LINE_AA)  # filled
         cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
 
-def plot_one_box_PIL(box, img, color=None, label=None, line_thickness=None):
+def plot_one_box_PIL(box, img, color=(255, 0, 0), label=None, line_thickness=None):
     img = Image.fromarray(img)
     draw = ImageDraw.Draw(img)
     line_thickness = line_thickness or max(int(min(img.size) / 200), 2)

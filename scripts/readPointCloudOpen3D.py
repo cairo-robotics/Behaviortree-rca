@@ -49,10 +49,10 @@ class rgbThresholdingNode():
         rospy.init_node("ReadAndSaveImge")
         rospy.Subscriber(self.topicName, Image ,self.cannyCallback,queue_size=1) # Replace this with wait for message and just get one code to run
         #TODO: Use canny image and YOLO to find appropriate depth and position in the map and return that so that point cloud node can use the same 
-        return pt1, pt2
+        # return pt1, pt2
                 
 class ptCloudNode():
-    def __init__(self, name, pt1, pt2) -> None:
+    def __init__(self, name, pt1 = [10, 100], pt2 = [40,200]) -> None:
         """Initialises the depth reader node
 
         Args:
@@ -120,7 +120,9 @@ class ptCloudNode():
         """Initialises node and calls subscriber
         """
         rospy.init_node("ReadAndSavePtCloud")
-        rospy.Subscriber(self.topicName, Image ,self.ptCloudcallback,queue_size=1)
+        tt = rospy.wait_for_message(self.topicName, Image)
+        self.ptCloudcallback(tt)
+        # rospy.Subscriber(self.topicName, Image ,self.ptCloudcallback,queue_size=1)
 
 if __name__ == "__main__":
     tmp = ptCloudNode("/camera/aligned_depth_to_color/")
