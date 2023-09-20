@@ -8,6 +8,8 @@ from geometry_msgs.msg import (
     Point,
     Quaternion,
 )
+import actionlib
+from pick.msg import pickPos, response
 from tf.transformations import quaternion_slerp
 import intera_interface
 
@@ -16,7 +18,7 @@ class response():
         self.process_name = name
         self.status = status        
 
-class PickAndPlace(object):
+class PickServer():
     def __init__(self, limb="right", hover_distance = 0.15, tip_name="right_gripper_tip"):
         self._limb_name = limb # string
         self._tip_name = tip_name # string
@@ -29,6 +31,7 @@ class PickAndPlace(object):
         self._init_state = self._rs.state().enabled
         print("Enabling robot... ")
         self._rs.enable()
+        self.PickActionServer = actionlib.SimpleActionServer("PickAction", pickPos, self.pick)
 
     def move_to_start(self, start_angles=None):
         print("Moving the {0} arm to start pose...".format(self._limb_name))
@@ -119,25 +122,64 @@ class PickAndPlace(object):
         rospy.sleep(1.0)
         return "success"
 
+    def start(self):
+        self._loginfo('PickServer Started')
+        self.PickActionServer.start()
+    
+    def stop(self):
+        self._loginfo('PickServer Stopped')
+
     def pick(self, pose):
-        print("pick")
         if rospy.is_shutdown():
             return
-        # open the gripper
-        self.gripper_open()
-        # servo above pose
-        self._approach(pose)
-        # servo to pose
-        self._servo_to_pose(pose)
-        if rospy.is_shutdown():
-            return
-        # close gripper
-        self.gripper_close()
-        # retract to clear object
-        self._retract()
+        try:
+            # open the gripper
+            self.gripper_open()
+        except Exception as e:
+            self._loginfo(f'Gripper did not open check configuration:{e}')
+            result = response()
+            result.success = False
+            self.ReachGoalActionServer.set_aborted(result)
+        
+        try:
+            # servo above pose
+            self._approach(pose)
+        except:
+            self._loginfo(f'Error in approaching:{e}')
+            result = response()
+            result.success = False
+            self.ReachGoalActionServer.set_aborted(result)
+        
+        try:    
+            # servo to pose
+            self._servo_to_pose(pose)
+            if rospy.is_shutdown():
+                return
+        except:
+            self._loginfo(f'Error in getting to object:{e}')
+            result = response()
+            result.success = False
+            self.ReachGoalActionServer.set_aborted(result)
+        
+        try:    
+            # close gripper
+            self.gripper_close()
+        except:
+            self._loginfo(f'Error in closing gripper:{e}')
+            result = response()
+            result.success = False
+            self.ReachGoalActionServer.set_aborted(result)
+        
+        try:    
+            # retract to clear object
+            self._retract()
+        except:
+            self._loginfo(f'Error in retracting from the object:{e}')
+            result = response()
+            result.success = False
+            self.ReachGoalActionServer.set_aborted(result)
 
     def place(self, pose):
-        print("place")
         if rospy.is_shutdown():
             return
         # servo above pose

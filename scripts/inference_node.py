@@ -1,4 +1,3 @@
-import cv2
 import open3d as o3d
 from cv_bridge import CvBridge
 import torch, time
@@ -7,15 +6,18 @@ import numpy as np
 from numpy import random
 import rospy, message_filters
 from sensor_msgs.msg import Image, CameraInfo
+from geometry_msgs.msg import PointStamped, Point
+from std_msgs.msg import Header
 from experimental import attempt_load
 from datasets import letterbox
-from general import check_img_size, non_max_suppression, scale_coords, xyxy2xywh
+from general import check_img_size, non_max_suppression, scale_coords
 from plots import plot_one_box
 from torch_utils import select_device, time_synchronized, TracedModel
 from copy import deepcopy
 
 import sys
 sys.path.insert(0, './yolov7')
+counter = 0
 
 class DetectHole:
     def __init__(self) -> None:
@@ -29,6 +31,7 @@ class DetectHole:
         self.classes        = ''
         self.agnostic_nms   = False
         self.inferenceImagepub = rospy.Publisher('/ethernetDetector', Image, queue_size=10)
+        self.goalPtPub      =  rospy.Publisher("/MeanValue", PointStamped, queue_size=1)
         self.ethernetPort   = []
 
     def initialize(self):
@@ -52,6 +55,7 @@ class DetectHole:
         self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in self.names]
 
     def detect(self, rgbImg, alighnedDepthImg):
+        global counter; counter += 1
         # Run inference
         if self.device.type != 'cpu':
             self.model(torch.zeros(1, 3, self.imgsz, self.imgsz).to(self.device).type_as(next(self.model.parameters())))  # run once
@@ -138,20 +142,25 @@ class DetectHole:
         left_3dpt   = [min(part_ptCloud.points[:,0]) - 0.059, min(part_ptCloud.points[:,1])]
         right_3dpt  = [max(part_ptCloud.points[:,0]) - 0.059, max(part_ptCloud.points[:,1])]
         
-        mean_pt     = [np.mean([left_3dpt[0], right_3dpt[0]]), np.mean([left_3dpt[1], right_3dpt[1]])] 
-        
-        return img0
+        mean_pt     = [np.mean([left_3dpt[0], right_3dpt[0]]), np.mean([left_3dpt[1], right_3dpt[1]]), np.mean(part_ptCloud.points[:,2])] # Middle of object detection x, middle of object detection y, mean of all z values in object plane
+        pt = Point()
+        pt.x, pt.y, pt.z = mean_pt[0], mean_pt[1], mean_pt[2]
+        h1 = Header()
+        h1.seq = counter
+        h1.stamp = rospy.Time.now()
+        pubPt  = PointStamped()
+        pubPt.header = h1
+        pubPt.point  = pt
+        self.goalPtPub.publish(pt)
 
     def startNode(self):
         """Initialises node and calls subscriber
         """
         rospy.init_node("InferenceNode")
-        # rospy.Subscriber("/camera/color/image_raw", Image ,self.detect,queue_size=1)
         image_sub = message_filters.Subscriber('/camera/color/image_raw', Image)
         depth_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
         ts = message_filters.TimeSynchronizer([image_sub, depth_sub], 1)
         ts.registerCallback(self.detect)
-
 
 if __name__ == '__main__':
     tt = DetectHole()
