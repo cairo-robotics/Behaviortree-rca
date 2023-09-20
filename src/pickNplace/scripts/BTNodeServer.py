@@ -1,7 +1,5 @@
 import copy
-
 import rospy
-
 from geometry_msgs.msg import (
     PoseStamped,
     Pose,
@@ -15,12 +13,7 @@ from servotoPose.srv import servo_to_Pose, servotopose_reply
 from retract.srv import retract_cmd, retract_reply
 
 from tf.transformations import quaternion_slerp
-import intera_interface
-
-class response():
-    def __init__(self, name, status) -> None:
-        self.process_name = name
-        self.status = status        
+import intera_interface 
 
 class CommandServer():
     def __init__(self, limb="right", hover_distance = 0.15, tip_name="right_gripper_tip"):
@@ -37,6 +30,15 @@ class CommandServer():
         self._rs.enable()
 
     def _guarded_move_to_joint_position(self, joint_angles, timeout=5.0):
+        """Moves the arm to the given joint angles
+
+        Args:
+            joint_angles (_type_): _description_ #TODO: Fill the datatype
+            timeout (float, optional): timeout to giving command and recieving ack from sawyer. Defaults to 5.0.
+
+        Returns:
+            string: status of servoing to the goal
+        """
         if rospy.is_shutdown():
             return
         if joint_angles:
@@ -47,6 +49,14 @@ class CommandServer():
         return "success"
 
     def gripper(self, cmd):
+        """Gripper command callback for the gripper_cmd service
+
+        Args:
+            cmd (string): Command to open or close the gripper
+
+        Returns:
+            gripper_reply (boolean): Success/Failure reply
+        """
         if cmd == 'Open':
             try:
                 self._gripper.open()
@@ -69,6 +79,14 @@ class CommandServer():
         
 
     def _approach(self, pose):
+        """Slows down the arm and moves to the desired joint angle positions
+
+        Args:
+            pose (rosmsg pose): Desired pose where arm has to reach
+
+        Returns:
+            approach_reply(boolean): Success/Failure reply
+        """
         approach = copy.deepcopy(pose)
         # approach with a pose the hover-distance above the requested pose
         approach.position.z = approach.position.z + self._hover_distance
@@ -99,7 +117,16 @@ class CommandServer():
         return approach_reply(True)
 
     def _servo_to_pose(self, pose, time=4.0, steps=400.0):
-        ''' An *incredibly simple* linearly-interpolated Cartesian move '''
+        """An *incredibly simple* linearly-interpolated Cartesian move
+
+        Args:
+            pose (rosmsg Pose): Pose to servo to
+            time (float, optional): Rospy rate. Defaults to 4.0.
+            steps (float, optional): Steps of interpolation for the trajectory. Defaults to 400.0.
+
+        Returns:
+            servotopose_reply: Success/Failure reply
+        """
         r = rospy.Rate(1/(time/steps)) # Defaults to 100Hz command rate
         try:
             current_pose = self._limb.endpoint_pose()
@@ -152,6 +179,14 @@ class CommandServer():
         return servotopose_reply(False) 
 
     def _retract(self, cmd):
+        """Move to pose at a hoverdistance
+
+        Args:
+            cmd (Bool): Dummy variable requested from the client
+
+        Returns:
+            retract_reply(Bool): Success/Failure reply
+        """
         # retrieve current pose from endpoint
         current_pose = copy.deepcopy(self._limb.endpoint_pose())
         ik_pose = Pose()
@@ -198,9 +233,10 @@ class CommandServer():
 
 def main():
     tt = CommandServer() 
-    srv1 = tt.pick_srv()
-    srv2 = tt.place_srv()
-    srv3 = tt.move_to_joint_posn_srv()
+    srv1 = tt.gripper()
+    srv2 = tt.approach()
+    srv3 = tt.ServoToPose()
+    srv4 = tt.retract()
     rospy.spin()
 
 main()

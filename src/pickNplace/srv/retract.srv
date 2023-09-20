@@ -1,3 +1,3 @@
-bool cmd
+bool retract_cmd
 ---
-bool reply
+bool retract_reply
