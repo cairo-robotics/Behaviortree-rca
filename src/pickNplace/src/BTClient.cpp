@@ -81,9 +81,13 @@ class approach : public BT::SyncActionNode{
         geometry_msgs::Pose target_pose;
         BT::TreeNode::getInput(std::string("approachPose"), target_pose);
         // Call service here
+        ros::ServiceClient client = this->_nh.serviceClient<pickNplace::approach>(std::string("ApproachCmd"));
+        pickNplace::ApproachCmd srv_call;
+        srv_call.request.gripper_cmd = target_pose;
+        ros::service::waitForService("ApproachCmd", ros::Duration(5));
 
         // Write to blackboard?
-        if(!success){
+        if(!client.call(srv_call)){
             BT_ROS_INFO_STREAM("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
             return BT::NodeStatus::FAILURE;
         }
@@ -108,10 +112,18 @@ class ServoToPose : public BT::SyncActionNode{
         // Read from blackboard
         geometry_msgs::Pose target_pose;
         BT::TreeNode::getInput(std::string("ServoToPose"), target_pose);
+
         // Call service here
+        ros::ServiceClient client = this->_nh.serviceClient<pickNplace::approach>(std::string("ServoToPoseCmd"));
+
+        pickNplace::ServoToPoseCmd srv_call;
+
+        srv_call.request.ServoToPoseCmd = target_pose;
+
+        ros::service::waitForService("ServoToPoseCmd", ros::Duration(5));
 
         // Write to blackboard?
-        if(!success){
+        if(!client.call(srv_call)){
             BT_ROS_INFO_STREAM("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
             return BT::NodeStatus::FAILURE;
         }
@@ -137,9 +149,16 @@ class retract : public BT::SyncActionNode{
         geometry_msgs::Pose target_pose;
         BT::TreeNode::getInput(std::string("retractPose"), target_pose);
         // Call service here
+        ros::ServiceClient client = this->_nh.serviceClient<pickNplace::RetractCmd>(std::string("RetractCmd"));
+
+        pickNplace::RetractCmd srv_call;
+
+        srv_call.request.ServoToPoseCmd = target_pose;
+
+        ros::service::waitForService("ServoToPoseCmd", ros::Duration(5));
 
         // Write to blackboard?
-        if(!success){
+        if(!client.call(srv_call)){
             BT_ROS_INFO_STREAM("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
             return BT::NodeStatus::FAILURE;
         }
