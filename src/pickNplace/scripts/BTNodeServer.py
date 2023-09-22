@@ -221,7 +221,7 @@ class CommandServer():
 
     def retract(self):
         rospy.init_node("ServoToPoseServer")
-        service     =   rospy.service("ServoToPoseCmd", retract_cmd, self._servo_to_pose)
+        service     =   rospy.service("RetractCmd", retract_cmd, self._retract)
         return service
 
     @staticmethod
