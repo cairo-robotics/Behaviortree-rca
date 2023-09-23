@@ -1,0 +1,3 @@
+geometry_msgs/Pose approach_pose
+---
+bool approach_reply
