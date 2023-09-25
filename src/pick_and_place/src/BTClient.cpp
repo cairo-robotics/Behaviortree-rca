@@ -3,6 +3,7 @@
 #include <boost/function.hpp>
 
 #include <geometry_msgs/PoseWithCovariance.h>
+#include <geometry_msgs/PointStamped.h>
 #include <behaviortree_cpp_v3/behavior_tree.h>
 #include <behaviortree_cpp_v3/bt_factory.h>
 #include <behaviortree_cpp_v3/action_node.h>
@@ -172,6 +173,47 @@ class retract : public BT::SyncActionNode{
             ros::service::waitForService("RetractCmd", ros::Duration(5));
 
             if(!client.call(srv_call)){
+                ROS_INFO("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
+                return BT::NodeStatus::SUCCESS;
+            }
+            else{
+                ROS_ERROR("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
+                return BT::NodeStatus::FAILURE;
+            }
+        }
+
+        static BT::PortsList providedPorts(){
+            return{};
+        }
+};
+
+class visualFeedback : public BT::SyncActionNode{
+    private:
+        ros::NodeHandle _nh;
+        geometry_msgs::PointStamped desiredPosition;
+
+    public:
+        visualFeedback(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
+        : BT::SyncActionNode(name, config){
+            this->_nh = nh;
+            int argc = 0;
+            char **argv = NULL;
+            ros::init(argc, argv, "visualFeedbackReader");
+            this->desiredPosition.header.seq = -1; // Default setting to check weather the message has been modified by callback or not;
+        }
+
+        void visualFeedbackCallback(const geometry_msgs::PointStamped::ConstPtr& msg){
+            this->desiredPosition.point     = msg->point;
+            this->desiredPosition.header    = msg->header; 
+        }
+
+        BT::NodeStatus tick() override{
+            // Call service here
+            ros::Subscriber sub = this->_nh.subscribe("/visionFeedback/MeanValue", 1, &visualFeedback::visualFeedbackCallback, this);
+
+            ros::spinOnce();
+
+            if(!(this->desiredPosition.header.seq == -1)){
                 ROS_INFO("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
                 return BT::NodeStatus::SUCCESS;
             }

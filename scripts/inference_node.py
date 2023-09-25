@@ -27,11 +27,11 @@ class DetectHole:
         self.device         = "cpu"
         self.half           = False
         self.conf_thres     = 0.5
-        self.iou_thres      = 0.3
+        self.iou_thres      = 0.5
         self.classes        = ''
         self.agnostic_nms   = False
-        self.inferenceImagepub = rospy.Publisher('/ethernetDetector', Image, queue_size=10)
-        self.goalPtPub      =  rospy.Publisher("/MeanValue", PointStamped, queue_size=1)
+        self.inferenceImagepub = rospy.Publisher('/visionFeedback/ethernetDetector', Image, queue_size=10)
+        self.goalPtPub      =  rospy.Publisher("/visionFeedback/MeanValue", PointStamped, queue_size=1)
         self.ethernetPort   = []
 
     def initialize(self):
