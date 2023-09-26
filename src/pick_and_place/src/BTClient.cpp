@@ -22,9 +22,7 @@ class gripperOpen : public BT::SyncActionNode{
     ros::NodeHandle _nh;
     public:
         gripperOpen(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
-        : BT::SyncActionNode(name, config){
-            this->_nh = nh;
-        }
+        : BT::SyncActionNode(name, config), _nh(nh){}
 
         BT::NodeStatus tick() override{
             // Client code to open the gripper and recieve a response
@@ -51,9 +49,7 @@ class gripperClose : public BT::SyncActionNode{
     ros::NodeHandle _nh;
     public:
         gripperClose(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
-        : BT::SyncActionNode(name, config){
-            this->_nh = nh;
-        }
+        : BT::SyncActionNode(name, config), _nh(nh){}
 
         BT::NodeStatus tick() override{
             // Client code to open the gripper and recieve a response
@@ -78,21 +74,17 @@ class gripperClose : public BT::SyncActionNode{
 class approach : public BT::SyncActionNode{
     private:
         ros::NodeHandle _nh;
+        geometry_msgs::Pose _targetPose;
 
     public:
-        approach(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
-        : BT::SyncActionNode(name, config){
-            this->_nh = nh;
-        }
+        approach(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config, geometry_msgs::Pose InputPose)
+        : BT::SyncActionNode(name, config), _nh(nh), _targetPose(InputPose){}
 
         BT::NodeStatus tick() override{
-            // Read from blackboard
-            geometry_msgs::Pose target_pose;
-            BT::TreeNode::getInput(std::string("approachPose"), target_pose);
             // Call service here
             ros::ServiceClient client = this->_nh.serviceClient<pick_and_place::approach>(std::string("ApproachCmd"));
             pick_and_place::approach srv_call;
-            srv_call.request.approach_pose = target_pose;
+            srv_call.request.approach_pose = this->_targetPose;
             ros::service::waitForService("ApproachCmd", ros::Duration(5));
 
             // Write to blackboard?
@@ -114,16 +106,14 @@ class approach : public BT::SyncActionNode{
 class ServoToPose : public BT::SyncActionNode{
     private:
         ros::NodeHandle _nh;
-
+        geometry_msgs::Pose _targetPose;
     public:
-        ServoToPose(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
-        : BT::SyncActionNode(name, config){
-            this->_nh = nh;
-        }
+        ServoToPose(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config, geometry_msgs::Pose InputPose)
+        : BT::SyncActionNode(name, config), _nh(nh), _targetPose(InputPose){}
 
         BT::NodeStatus tick() override{
             // Read from blackboard
-            geometry_msgs::Pose target_pose;
+            geometry_msgs::Pose target_pose = this->_targetPose;
             BT::TreeNode::getInput(std::string("ServoToPose"), target_pose);
 
             // Call service here
@@ -157,10 +147,7 @@ class retract : public BT::SyncActionNode{
 
     public:
         retract(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
-        : BT::SyncActionNode(name, config){
-            this->_nh = nh;
-        }
-
+        : BT::SyncActionNode(name, config), _nh(nh){}
 
         BT::NodeStatus tick() override{
             // Call service here
@@ -190,21 +177,20 @@ class retract : public BT::SyncActionNode{
 class visualFeedback : public BT::SyncActionNode{
     private:
         ros::NodeHandle _nh;
-        geometry_msgs::PointStamped desiredPosition;
+        geometry_msgs::PointStamped _desiredPosition;
 
     public:
         visualFeedback(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
-        : BT::SyncActionNode(name, config){
-            this->_nh = nh;
+        : BT::SyncActionNode(name, config), _nh(nh){
             int argc = 0;
             char **argv = NULL;
             ros::init(argc, argv, "visualFeedbackReader");
-            this->desiredPosition.header.seq = -1; // Default setting to check weather the message has been modified by callback or not;
+            this->_desiredPosition.header.seq = -1; // Default setting to check weather the message has been modified by callback or not;
         }
 
         void visualFeedbackCallback(const geometry_msgs::PointStamped::ConstPtr& msg){
-            this->desiredPosition.point     = msg->point;
-            this->desiredPosition.header    = msg->header; 
+            this->_desiredPosition.point     = msg->point;
+            this->_desiredPosition.header    = msg->header; 
         }
 
         BT::NodeStatus tick() override{
@@ -213,7 +199,8 @@ class visualFeedback : public BT::SyncActionNode{
 
             ros::spinOnce();
 
-            if(!(this->desiredPosition.header.seq == -1)){
+            if(!(this->_desiredPosition.header.seq == -1)){
+                // Write variable to the blackboard
                 ROS_INFO("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
                 return BT::NodeStatus::SUCCESS;
             }
@@ -227,6 +214,48 @@ class visualFeedback : public BT::SyncActionNode{
             return{};
         }
 };
+
+static const char* pickTree = R"(
+ <root BTCPP_format="3">
+     <BehaviorTree>
+        <Sequence>
+            <gripperOpen/>
+            <RetryUntilSuccessful num_attempts="5">
+                <approach/>
+            </RetryUntilSuccessful>
+            <RetryUntilSuccessful num_attempts="5">
+                <ServoToPose/>
+            </RetryUntilSuccessful>
+            <gripperClose/>
+            <RetryUntilSuccessful num_attempts="5">
+                <retract/>
+            </RetryUntilSuccessful>
+        </Sequence>
+     </BehaviorTree>
+ </root>
+ )";
+
+static const char* visualServoTree = R"(
+ <root BTCPP_format="3">
+     <BehaviorTree>
+        <Sequence>
+            <RetryUntilSuccessful num_attempts="5">
+                <Sequence>
+                    <visualFeedback/>
+                    <approach/>
+                </Sequence>
+            </RetryUntilSuccessful>
+            <RetryUntilSuccessful num_attempts="5">
+                <ServoToPose/>
+            </RetryUntilSuccessful>
+            <gripperOpen/>
+            <RetryUntilSuccessful num_attempts="5">
+                <retract/>
+            </RetryUntilSuccessful>
+        </Sequence>
+     </BehaviorTree>
+ </root>
+ )";
 
 int main(){
     std::cout << "Exec Test" << std::endl;
