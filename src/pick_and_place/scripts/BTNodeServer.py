@@ -7,16 +7,14 @@ from geometry_msgs.msg import (
     Quaternion,
 )
 
-from gripper.srv import gripper_cmd, gripper_reply
-from approach.srv import approach_pose, approach_reply
-from servotoPose.srv import servo_to_Pose, servotopose_reply
-from retract.srv import retract_cmd, retract_reply
+from pick_and_place.srv import _gripper, _approach, _servotoPose, _retract
 
 from tf.transformations import quaternion_slerp
 import intera_interface 
 
 class CommandServer():
-    def __init__(self, limb="right", hover_distance = 0.15, tip_name="right_gripper_tip"):
+    def __init__(self, limb="right", hover_distance = -0.35, tip_name="right_gripper_tip"):
+        rospy.init_node("CommandServer")
         self._limb_name = limb # string
         self._tip_name = tip_name # string
         self._hover_distance = hover_distance # in meters
@@ -48,7 +46,7 @@ class CommandServer():
             return "error"
         return "success"
 
-    def gripper(self, cmd):
+    def gripper_srv(self, cmd):
         """Gripper command callback for the gripper_cmd service
 
         Args:
@@ -57,25 +55,25 @@ class CommandServer():
         Returns:
             gripper_reply (boolean): Success/Failure reply
         """
-        if cmd == 'Open':
+        if cmd.gripper_cmd == 'Open':
             try:
                 self._gripper.open()
                 rospy.sleep(1.0)
-                return gripper_reply(True)
+                return _gripper.gripperResponse(True)
             except Exception as e:
                 self._loginfo("GripperNode", e)
-                return gripper_reply(False) 
-        elif cmd == 'Close':
+                return _gripper.gripperResponse(False) 
+        elif cmd.gripper_cmd == 'Close':
             try:
                 self._gripper.close()
                 rospy.sleep(1.0)
-                return gripper_reply(True)
+                return _gripper.gripperResponse(True)
             except Exception as e:
                 self._loginfo("GripperNode", e)
-                return gripper_reply(False)
+                return _gripper.gripperResponse(False)
         else: 
-            self._loginfo("GripperNode", "Invalid Command From Client")
-            return gripper_reply(False)
+            self._loginfo("GripperNode", "Invalid Command From Client: " + cmd.gripper_cmd)
+            return _gripper.gripperResponse(False)
         
 
     def _approach(self, pose):
@@ -87,7 +85,7 @@ class CommandServer():
         Returns:
             approach_reply(boolean): Success/Failure reply
         """
-        approach = copy.deepcopy(pose)
+        approach = copy.deepcopy(pose.approach_pose)
         # approach with a pose the hover-distance above the requested pose
         approach.position.z = approach.position.z + self._hover_distance
         print("approach pose: ", approach)
@@ -95,28 +93,32 @@ class CommandServer():
             joint_angles = self._limb.ik_request(approach, self._tip_name)
         except Exception as e:
             self._loginfo("ApproachNode", e)
-            return approach_reply(False)
+            return _approach.approachResponse(False)
         
         print("Approach joint_angles: ", joint_angles)
         try:
             self._limb.set_joint_position_speed(0.001)
         except Exception as e:
             self._loginfo("ApproachNode", e)
-            return approach_reply(False)
+            return _approach.approachResponse(False)
         try:
-            self._guarded_move_to_joint_position(joint_angles)
+            respValue = self._guarded_move_to_joint_position(joint_angles)
+            if respValue == 'error':
+                self._loginfo("ApproachNode failed as invalid pose to servo", approach.__str__())
+                return _approach.approachResponse(False)
+
         except Exception as e:
             self._loginfo("ApproachNode", e)
-            return approach_reply(False)
+            return _approach.approachResponse(False)
         try:
             self._limb.set_joint_position_speed(0.1)
         except Exception as e:
             self._loginfo("ApproachNode", e)
-            return approach_reply(False)
+            return _approach.approachResponse(False)
 
-        return approach_reply(True)
+        return _approach.approachResponse(True)
 
-    def _servo_to_pose(self, pose, time=4.0, steps=400.0):
+    def _servo_to_pose(self, servoToPose_msg, time=4.0, steps=400.0):
         """An *incredibly simple* linearly-interpolated Cartesian move
 
         Args:
@@ -127,12 +129,13 @@ class CommandServer():
         Returns:
             servotopose_reply: Success/Failure reply
         """
+        pose = copy.deepcopy(servoToPose_msg.servo_to_pose)
         r = rospy.Rate(1/(time/steps)) # Defaults to 100Hz command rate
         try:
             current_pose = self._limb.endpoint_pose()
         except Exception as e:
             self._loginfo("ServoToPoseNode", e)
-            return servotopose_reply(False) 
+            return _servotoPose.servotoPoseResponse(False) 
 
         ik_delta = Point()
         ik_delta.x = (current_pose['position'].x - pose.position.x) / steps
@@ -163,20 +166,20 @@ class CommandServer():
                 joint_angles = self._limb.ik_request(ik_step, self._tip_name)
             except Exception as e:
                 self._loginfo("ServoToPoseNode", e)
-                return servotopose_reply(False) 
+                return _servotoPose.servotoPoseResponse(False) 
 
             if joint_angles:
                 try:
                     self._limb.set_joint_positions(joint_angles)
                 except Exception as e:
                     self._loginfo("ServoToPoseNode", e)
-                    return servotopose_reply(False) 
+                    return _servotoPose.servotoPoseResponse(False) 
             else:
                 rospy.logerr("No Joint Angles provided for move_to_joint_positions. Staying put.")
-                return "error"
+                return _servotoPose.servotoPoseResponse(False) 
             r.sleep()
         rospy.sleep(1.0)
-        return servotopose_reply(False) 
+        return _servotoPose.servotoPoseResponse(True) 
 
     def _retract(self, cmd):
         """Move to pose at a hoverdistance
@@ -189,6 +192,7 @@ class CommandServer():
         """
         # retrieve current pose from endpoint
         current_pose = copy.deepcopy(self._limb.endpoint_pose())
+        # Create static pose to return to here
         ik_pose = Pose()
         ik_pose.position.x = current_pose['position'].x
         ik_pose.position.y = current_pose['position'].y
@@ -197,31 +201,30 @@ class CommandServer():
         ik_pose.orientation.y = current_pose['orientation'].y
         ik_pose.orientation.z = current_pose['orientation'].z
         ik_pose.orientation.w = current_pose['orientation'].w
+        staticRetract_pose = _servotoPose.servotoPoseRequest(ik_pose)
         try:
-            self._servo_to_pose(ik_pose)
-            return retract_reply(True)
+            # To retract first move the joint to neutral position
+            self._limb.move_to_neutral()
+            resp = self._servo_to_pose(staticRetract_pose)
+            return _retract.retractResponse(True)
         except Exception as e:
             self._loginfo("RetractNode", e)
-            return retract_reply(False) 
+            return _retract.retractResponse(False) 
 
     def gripper(self):
-        rospy.init_node("GripperCmdServer")
-        service     =   rospy.service("GripperCmd", gripper_cmd, self.gripper)
+        service     =   rospy.Service("GripperCmd", _gripper.gripper, self.gripper_srv)
         return service
 
     def approach(self):
-        rospy.init_node("ApproachCmdServer")
-        service     =   rospy.service("ApproachCmd", approach_pose, self._approach)
+        service     =   rospy.Service("ApproachCmd", _approach.approach, self._approach)
         return service
 
     def ServoToPose(self):
-        rospy.init_node("ServoToPoseServer")
-        service     =   rospy.service("ServoToPoseCmd", servo_to_Pose, self._servo_to_pose)
+        service     =   rospy.Service("ServoToPoseCmd", _servotoPose.servotoPose, self._servo_to_pose)
         return service
 
     def retract(self):
-        rospy.init_node("ServoToPoseServer")
-        service     =   rospy.service("RetractCmd", retract_cmd, self._retract)
+        service     =   rospy.Service("RetractCmd", _retract.retract, self._retract)
         return service
 
     @staticmethod

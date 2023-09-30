@@ -24,6 +24,7 @@ find_package(Boost COMPONENTS coroutine QUIET)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp 
+  rospy
   behaviortree_cpp_v3
   std_msgs
   message_generation
@@ -115,6 +116,7 @@ generate_messages(
 
 catkin_package(
   CATKIN_DEPENDS roscpp
+  rospy
   std_msgs
   geometry_msgs
   actionlib_msgs
@@ -122,6 +124,7 @@ catkin_package(
   message_runtime
 )
 
+catkin_install_python(PROGRAMS scripts/BTNodeServer.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 ###########
 ## Build ##
