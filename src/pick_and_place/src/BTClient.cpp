@@ -8,7 +8,7 @@
 #include <boost/function.hpp>
 
 #include <geometry_msgs/PoseWithCovariance.h>
-#include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <behaviortree_cpp_v3/behavior_tree.h>
 #include <behaviortree_cpp_v3/bt_factory.h>
 #include <behaviortree_cpp_v3/action_node.h>
@@ -45,11 +45,23 @@ void createMsg (geometry_msgs::Pose* msg, const std::vector<float> poseVal){
     msg->orientation.w = poseVal[6];
 }
 
+std::string createString(geometry_msgs::Pose* msg, std::string delimiter){
+    std::string ans;
+    ans = std::to_string(msg->position.x) + delimiter;
+    ans += std::to_string(msg->position.y) + delimiter;
+    ans += std::to_string(msg->position.z) + delimiter;
+    ans += std::to_string(msg->orientation.x) + delimiter;
+    ans += std::to_string(msg->orientation.y) + delimiter;
+    ans += std::to_string(msg->orientation.z) + delimiter;
+    ans += std::to_string(msg->orientation.w) + delimiter;
+    return ans;
+}
+
 class gripperOpen : public BT::SyncActionNode{
     private:
-    ros::NodeHandle _nh;
+        ros::NodeHandle _nh;
     public:
-        gripperOpen(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
+        gripperOpen(const std::string& name, const BT::NodeConfiguration& config,ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){}
 
         BT::NodeStatus tick() override{
@@ -66,17 +78,17 @@ class gripperOpen : public BT::SyncActionNode{
                 return BT::NodeStatus::FAILURE;
             }
         }
-
         static BT::PortsList providedPorts(){
-            return{};
+            return {};
         }
+
 };
 
 class gripperClose : public BT::SyncActionNode{
     private:
-    ros::NodeHandle _nh;
+        ros::NodeHandle _nh;
     public:
-        gripperClose(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
+        gripperClose(const std::string& name, const BT::NodeConfiguration& config,ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){}
 
         BT::NodeStatus tick() override{
@@ -93,9 +105,8 @@ class gripperClose : public BT::SyncActionNode{
                 return BT::NodeStatus::FAILURE;
             }
         }
-
         static BT::PortsList providedPorts(){
-            return{};
+            return {};
         }
 };
 
@@ -105,7 +116,7 @@ class approach : public BT::SyncActionNode{
         geometry_msgs::Pose _targetPose;
 
     public:
-        approach(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
+        approach(const std::string& name, const BT::NodeConfiguration& config, ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){}
 
         BT::NodeStatus tick() override{
@@ -130,18 +141,17 @@ class approach : public BT::SyncActionNode{
             ros::service::waitForService("ApproachCmd", ros::Duration(5));
 
             // Write to blackboard?
-            if(!client.call(srv_call)){
-                ROS_INFO("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
+            if (client.call(srv_call)) {
+                ROS_INFO("Server call successful! Response was %d", srv_call.response.approach_reply);
                 return BT::NodeStatus::SUCCESS;
-            }
-            else{
-                ROS_ERROR("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
+            } else {
+                ROS_ERROR("Failed to call 'checks' service");
                 return BT::NodeStatus::FAILURE;
             }
         }
 
         static BT::PortsList providedPorts(){
-            return{};
+            return {InputPort<std::string>("approachPose")};
         }
 };
 
@@ -150,7 +160,7 @@ class ServoToPose : public BT::SyncActionNode{
         ros::NodeHandle _nh;
         geometry_msgs::Pose _targetPose;
     public:
-        ServoToPose(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
+        ServoToPose(const std::string& name, const BT::NodeConfiguration& config, ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){}
 
         BT::NodeStatus tick() override{
@@ -177,27 +187,27 @@ class ServoToPose : public BT::SyncActionNode{
             ros::service::waitForService("ServoToPoseCmd", ros::Duration(5));
 
             // Write to blackboard?
-            if(!client.call(srv_call)){
-                ROS_INFO("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
+            if (client.call(srv_call)) {
+                ROS_INFO("Server call successful! Response was %d", srv_call.response.servotopose_reply);
                 return BT::NodeStatus::SUCCESS;
-            }
-            else{
-                ROS_ERROR("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
+            } else {
+                ROS_ERROR("Failed to call 'checks' service");
                 return BT::NodeStatus::FAILURE;
             }
         }
 
         static BT::PortsList providedPorts(){
-            return{};
+            return{InputPort<std::string>("ServoToPose")};
         }
 };
 
 class retract : public BT::SyncActionNode{
+    // TODO: If we have two positions to retract to, how to choose one? Ideally there should be an input from the client that server parses and executes the same
     private:
         ros::NodeHandle _nh;
 
     public:
-        retract(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
+        retract(const std::string& name, const BT::NodeConfiguration& config, ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){}
 
         BT::NodeStatus tick() override{
@@ -210,12 +220,11 @@ class retract : public BT::SyncActionNode{
 
             ros::service::waitForService("RetractCmd", ros::Duration(5));
 
-            if(!client.call(srv_call)){
-                ROS_INFO("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
+            if (client.call(srv_call)) {
+                ROS_INFO("Server call successful! Response was %d", srv_call.response.retract_reply);
                 return BT::NodeStatus::SUCCESS;
-            }
-            else{
-                ROS_ERROR("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
+            } else {
+                ROS_ERROR("Failed to call 'checks' service");
                 return BT::NodeStatus::FAILURE;
             }
         }
@@ -228,10 +237,10 @@ class retract : public BT::SyncActionNode{
 class visualFeedback : public BT::SyncActionNode{
     private:
         ros::NodeHandle _nh;
-        geometry_msgs::PointStamped _desiredPosition;
+        geometry_msgs::PoseStamped _desiredPosition;
 
     public:
-        visualFeedback(ros::NodeHandle &nh, const std::string& name, const BT::NodeConfiguration& config)
+        visualFeedback(const std::string& name, const BT::NodeConfiguration& config, ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){
             int argc = 0;
             char **argv = NULL;
@@ -239,8 +248,8 @@ class visualFeedback : public BT::SyncActionNode{
             this->_desiredPosition.header.seq = -1; // Default setting to check weather the message has been modified by callback or not;
         }
 
-        void visualFeedbackCallback(const geometry_msgs::PointStamped::ConstPtr& msg){
-            this->_desiredPosition.point     = msg->point;
+        void visualFeedbackCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
+            this->_desiredPosition.pose     = msg->pose;
             this->_desiredPosition.header    = msg->header; 
         }
 
@@ -252,6 +261,8 @@ class visualFeedback : public BT::SyncActionNode{
 
             if(!(this->_desiredPosition.header.seq == -1)){
                 // Write variable to the blackboard
+                std::string poseString = createString(&this->_desiredPosition.pose, std::string(";"));
+                setOutput("ServoToPose", poseString);
                 ROS_INFO("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
                 return BT::NodeStatus::SUCCESS;
             }
@@ -262,13 +273,13 @@ class visualFeedback : public BT::SyncActionNode{
         }
 
         static BT::PortsList providedPorts(){
-            return{};
+            return{OutputPort<std::string>("ServoToPose")};
         }
 };
 
 static const char* pickTree = R"(
  <root BTCPP_format="3">
-     <BehaviorTree>
+     <BehaviorTree ID="DemoTry">
         <Sequence>
             <gripperOpen/>
             <RetryUntilSuccessful num_attempts="5">
@@ -282,13 +293,13 @@ static const char* pickTree = R"(
                 <retract/>
             </RetryUntilSuccessful>
         </Sequence>
-     </BehaviorTree>
+     </BehaviorTree ID="DemoTry">
  </root>
 )";
 
 static const char* visualServoTree = R"(
  <root BTCPP_format="3">
-     <BehaviorTree>
+      <BehaviorTree ID="DemoTry">
         <Sequence>
             <RetryUntilSuccessful num_attempts="5">
                 <Sequence>
@@ -304,11 +315,67 @@ static const char* visualServoTree = R"(
                 <retract/>
             </RetryUntilSuccessful>
         </Sequence>
-     </BehaviorTree>
+      </BehaviorTree ID="DemoTry">
  </root>
 )";
 
-int main(){
+static const char* testTree = R"(
+ <root BTCPP_format="3">
+    <BehaviorTree ID="DemoTry">
+        <Sequence>
+            <gripperClose/>        
+            <retract/>
+            <gripperOpen/>
+        </Sequence>
+    </BehaviorTree ID="DemoTry">
+ </root>
+)";
+
+int main(int argc, char **argv){
+    ros::init(argc, argv, "BehaviorTreeNode");
+    ros::NodeHandle nh_;
+    ros::AsyncSpinner spinner(2);
+    spinner.start();
+    BehaviorTreeFactory factory;
+
+    BT::NodeBuilder gripper_close =
+    [nh_](const std::string& name, const NodeConfiguration& config)
+    {
+        return std::make_unique<gripperClose>(name, config, nh_);
+    };
+
+    BT::NodeBuilder gripper_open =
+    [nh_](const std::string& name, const NodeConfiguration& config)
+    {
+        return std::make_unique<gripperOpen>(name, config, nh_);
+    };
+
+    BT::NodeBuilder approach_node =
+    [nh_](const std::string& name, const NodeConfiguration& config)
+    {
+        return std::make_unique<approach>(name, config, nh_);
+    };
+
+    BT::NodeBuilder servo_to_pose_node =
+    [nh_](const std::string& name, const NodeConfiguration& config)
+    {
+        return std::make_unique<ServoToPose>(name, config, nh_);
+    };
+
+    BT::NodeBuilder retract_node =
+    [nh_](const std::string& name, const NodeConfiguration& config)
+    {
+        return std::make_unique<retract>(name, config, nh_);
+    };
+
+    factory.registerBuilder<gripperClose>("gripperClose", gripper_close);
+    factory.registerBuilder<gripperOpen>("gripperOpen", gripper_open);
+    factory.registerBuilder<retract>("retract", retract_node);
+
+    auto tree = factory.createTreeFromText(::testTree);
+
+    tree.tickRootWhileRunning();
+    spinner.stop();
     std::cout << "Exec Test" << std::endl;
     return 0;
 }
