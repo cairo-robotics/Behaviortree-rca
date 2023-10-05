@@ -323,8 +323,10 @@ static const char* testTree = R"(
  <root BTCPP_format="3">
     <BehaviorTree ID="DemoTry">
         <Sequence>
-            <gripperClose/>        
-            <retract/>
+            <gripperClose/>     
+            <Sequence>   
+                <retract/>
+            </Sequence>
             <gripperOpen/>
         </Sequence>
     </BehaviorTree ID="DemoTry">
