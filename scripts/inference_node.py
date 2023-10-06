@@ -132,11 +132,15 @@ class DetectHole:
         cam_info = rospy.wait_for_message(self.baseName + "camera_info", CameraInfo)
         self.intrinsic_mtrx = np.array(cam_info.K)
         self.intrinsic_mtrx = self.intrinsic_mtrx.reshape((3,3))
+        
         self.intrinsics_o3d = o3d.camera.PinholeCameraIntrinsic(int(cam_info.width), int(cam_info.height), self.intrinsic_mtrx)
+        
         depthImg = bridge.imgmsg_to_cv2(alighnedDepthImg)
+        
         total_ptCloud = o3d.geometry.PointCloud.create_from_depth_image(o3d.geometry.Image(depthImg.astype(np.uint16)), self.intrinsics_o3d)
         x_min, y_min = min(int(xyxy[0]), int(xyxy[2])), min(int(xyxy[1]), int(xyxy[3]))
         x_max, y_max = max(int(xyxy[0]), int(xyxy[2])), max(int(xyxy[1]), int(xyxy[3]))
+        
         part_ptCloud = o3d.geometry.PointCloud.create_from_depth_image(o3d.geometry.Image(depthImg[x_min:x_max, y_min:y_max].astype(np.uint16)), self.intrinsics_o3d)
         # Left shifted points in the point cloud
         left_3dpt   = [min(part_ptCloud.points[:,0]) - 0.059, min(part_ptCloud.points[:,1])]
