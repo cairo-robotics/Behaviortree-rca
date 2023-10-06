@@ -116,10 +116,10 @@ class ptCloudNode():
         header = std_msgs.msg.Header()
         header.stamp = rospy.Time.now()
         header.frame_id = 'camera_link'
-        my_awesome_pointcloud = PointCloud()
-        my_awesome_pointcloud.header = header
+        contourPtCloud = PointCloud()
+        contourPtCloud.header = header
         for i in self.open3dptCloud.points:
-            my_awesome_pointcloud.points.append(Point32(i[0], i[1], i[2]))
+            contourPtCloud.points.append(Point32(i[0], i[1], i[2]))
         
         original_pt_cloud = PointCloud()
         original_pt_cloud.header = header
@@ -127,7 +127,7 @@ class ptCloudNode():
             original_pt_cloud.points.append(Point32(i[0], i[1], i[2]))
 
         self.originalPtCloudPublisher.publish(original_pt_cloud)
-        self.pointcloudPublisher.publish(my_awesome_pointcloud)
+        self.pointcloudPublisher.publish(contourPtCloud)
 
 
     def readPointCloud(self):
