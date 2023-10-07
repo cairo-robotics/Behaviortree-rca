@@ -4,6 +4,29 @@
 '''
 Run file roslaunch realsense2_camera rs_aligned_depth.launch to get aligned images and then query them
 
+The code is running for joint state:
+---
+header: 
+  seq: 2742283
+  stamp: 
+    secs: 1696660373
+    nsecs: 505905783
+  frame_id: ''
+name: 
+  - head_pan
+  - right_j0
+  - right_j1
+  - right_j2
+  - right_j3
+  - right_j4
+  - right_j5
+  - right_j6
+  - torso_t0
+position: [0.11507421875, 0.758361328125, -0.1794775390625, -1.2341728515625, 1.64531640625, 1.351759765625, 1.23762109375, 2.53654296875, 0.0]
+velocity: [-0.001, -0.001, -0.001, -0.001, -0.001, -0.001, -0.001, -0.001, 0.0]
+effort: [0.0, -0.9, -30.044, -12.944, -1.352, 2.74, 0.22, 0.104, 0.0]
+---
+
 '''
 
 import rospy,message_filters
