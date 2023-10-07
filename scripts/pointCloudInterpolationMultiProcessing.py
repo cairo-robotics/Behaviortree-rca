@@ -6,12 +6,15 @@ Run file roslaunch realsense2_camera rs_aligned_depth.launch to get aligned imag
 
 '''
 
-import rospy
+import rospy,message_filters
 import open3d
-import cv2, os
+import cv2, os, copy
 import matplotlib.pyplot as plt
 import numpy as np
+from sympy import Point, Ellipse, Circle, RegularPolygon
 from ctypes import * # convert float to uint32
+import time 
+
 import tf2_ros
 from sensor_msgs.msg import Image, CameraInfo
 from sensor_msgs.msg import PointCloud
@@ -37,6 +40,14 @@ class ptCloudNode():
         self.i          = 0
         self.u_min, self.u_max = pt1[0], pt2[0]
         self.v_min, self.v_max = pt1[1], pt2[1]
+        # Here I create an ellipse of the same major and minor axis as that of the iron KET, then we try to do ICP 
+        r = RegularPolygon(Point(0, 0), 0.0065, 3)
+        self.e1  =   r.incircle
+        ket_ellipse = [self.e1.random_point(seed=np.random.uniform(-1,1)).n().coordinates for _ in range(50)]
+        self.ket_ellipse = copy.deepcopy(ket_ellipse)
+        for i in ket_ellipse:
+            self.ket_ellipse.append((i[0], -i[1]))
+
     
     def ptCloudcallback_volumeFilling(self, pointcloud):
         """
@@ -64,18 +75,18 @@ class ptCloudNode():
         distances = self.open3dptCloud.compute_nearest_neighbor_distance()
         avg_dist = np.mean(distances)
         radius = 1.5 * avg_dist   
-        #Open 3D generates a mesh to see and visualise the holes.
-        # self.mesh, _       = open3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(self.open3dptCloud, open3d.utility.DoubleVector([radius, radius * 2]))
-        # self.newMesh, _    = open3d.geometry.TriangleMesh.create_from_point_cloud_poisson(self.open3dptCloud)
+
         self.downpcd = self.open3dptCloud.voxel_down_sample(voxel_size=0.005)
         plane_model, inliers = self.open3dptCloud.segment_plane(distance_threshold=0.0085, ransac_n = 3, num_iterations=1000) # 0.0085 determined from the dataset
         self.inlier_cloud = self.open3dptCloud.select_by_index(inliers)
+        
         self.inlier_cloud.paint_uniform_color([1.0,0,0])
         self.outlier_cloud = self.open3dptCloud.select_by_index(inliers, invert=True).voxel_down_sample(voxel_size=0.005)
+        
         filledPtCloud = open3d.geometry.PointCloud()
         filledPtCloud.points =  outlierCloudInterp(self.outlier_cloud, plane_model, 10)
         filledPtCloud.paint_uniform_color([1.0,0.5,0.5])
-        print(filledPtCloud)
+        
         open3d.visualization.draw_geometries([self.open3dptCloud, filledPtCloud])
 
     def dist_PtPlane(plane_model, points):
@@ -85,62 +96,79 @@ class ptCloudNode():
             ans.append(distance_to_plane(i[0], i[1], i[2], plane_model[0], plane_model[1], plane_model[2], plane_model[3]))
         return ans
 
-    def cannyCallback(self, image):
+    def cannyCallback(self, rgbImg, alighnedDepthImg):
         """
         does canny edge detection to identify location of the KET block and publishes the final pose of the block
 
         Args:
             image (ros message image): Image message recieved from the topic
         """
-        self.i                  += 1
+        self.i                  += 11
         self.intrinsic_mtrx     = np.array(self.cam_info.K)
         self.intrinsic_mtrx     = self.intrinsic_mtrx.reshape((3,3))
         bridge                  = CvBridge()
-        cv_image                = bridge.imgmsg_to_cv2(image)
-        SmoothedImage           = cv2.bilateralFilter(cv_image.astype(np.float32), sigmaColor = 200, sigmaSpace = 10, d = -1)
-        self.edges              = cv2.Canny(SmoothedImage.astype(np.uint8), 40, 55)
-        # Here calculate all the non zero points and create an image with values from original image values (r,g,b) and store the rest as 0
-        self.edges  = self.edges.astype(np.float32)
-        vals = cv2.findNonZero(self.edges)
-        for i in vals:
-            self.edges[i[0][1], i[0][0]] = cv_image[i[0][1], i[0][0]]
+        cv_image                = bridge.imgmsg_to_cv2(rgbImg)
+        depthImg                = bridge.imgmsg_to_cv2(alighnedDepthImg)
         
-        self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.edges))
+        tt = time.time()
+        SmoothedImage           = cv2.bilateralFilter(cv_image.astype(np.float32), sigmaColor = 200, sigmaSpace = 4, d = -1)
+        SmoothedImage           = cv2.cvtColor(SmoothedImage, cv2.COLOR_BGR2HSV)
+        print("Time to update images: ", time.time() - tt)
+        
+        SmoothedImage           = cv2.inRange(SmoothedImage, (100,0,0), (255,255,255))
+        edges                   = cv2.Canny(SmoothedImage.astype(np.uint8), 50, 55)
+        
+        # Here calculate all the non zero points and create an image with values from original image values (r,g,b) and store the rest as 0
+        edges  = edges.astype(np.float32)
+        self.depthContour = (depthImg & edges.astype(np.int16)).astype(np.float32)     
+        self.countourPublisher.publish(bridge.cv2_to_imgmsg(edges.astype(np.uint8)))
+        tt = time.time()
         self.intrinsics_o3d = open3d.camera.PinholeCameraIntrinsic(int(self.cam_info.width), int(self.cam_info.height), self.intrinsic_mtrx)
-        self.open3dptCloud = open3d.geometry.PointCloud.create_from_depth_image(open3d.geometry.Image(self.edges.astype(np.uint16)), self.intrinsics_o3d)
-        original = open3d.geometry.PointCloud.create_from_depth_image(open3d.geometry.Image(cv_image.astype(np.uint16)), self.intrinsics_o3d)
-        original.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+        self.open3dptCloud = open3d.geometry.PointCloud.create_from_depth_image(open3d.geometry.Image(self.depthContour.astype(np.uint16)), self.intrinsics_o3d)
         self.open3dptCloud.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]) # Check here http://www.open3d.org/docs/latest/tutorial/Basic/rgbd_image.html
-        self.open3dptCloud.paint_uniform_color([0, 0, 0])
-        original.paint_uniform_color([1,1,0])
+        ptCldArr = np.asarray(self.open3dptCloud.points)
+        # max x value array:
+        max_x_arr = np.argwhere(ptCldArr[:,0] == max(ptCldArr[:,0])).T[0]
+        # Cropping point cloud
+        alighnedbbox  = open3d.geometry.AxisAlignedBoundingBox(np.array([0, -np.inf, min(ptCldArr[:,2])]), np.array([np.inf, 0, max(ptCldArr[:,2])]))
+        print(alighnedbbox)
+        self.open3dptCloud.crop(alighnedbbox)
+        print("Time to update Pointclouds: ", time.time() - tt)
         header = std_msgs.msg.Header()
         header.stamp = rospy.Time.now()
-        header.frame_id = 'camera_link'
+        header.frame_id = 'camera_depth_optical_frame'
         contourPtCloud = PointCloud()
         contourPtCloud.header = header
-        for i in self.open3dptCloud.points:
-            contourPtCloud.points.append(Point32(i[0], i[1], i[2]))
+        mean_z = np.mean(np.asarray(self.open3dptCloud.points)[:,2])
         
-        original_pt_cloud = PointCloud()
-        original_pt_cloud.header = header
-        for i in original.points:
-            original_pt_cloud.points.append(Point32(i[0], i[1], i[2]))
+        for i in self.open3dptCloud.points:
+            if(i[0] > 0 and i[1] < 0): # Only fourth quadrant points taken, since the block is supposed to be in that quadrant only
+                contourPtCloud.points.append(Point32(i[0], i[1], mean_z))
+        
+        for i in self.ket_ellipse:
+                contourPtCloud.points.append(Point32(i[0], i[1], mean_z))
+        
 
-        self.originalPtCloudPublisher.publish(original_pt_cloud)
-        self.pointcloudPublisher.publish(contourPtCloud)
-
+        self.pointcloudPublisher.publish(contourPtCloud)        
+        
+        self.rate.sleep()
 
     def readPointCloud(self):
         """Initialises node and calls subscriber
         """
         rospy.init_node("ReadAndSavePtCloud")
+        self.rate = rospy.Rate(100)
         self.cam_info                   = rospy.wait_for_message(self.baseName + "camera_info", CameraInfo, timeout=10)
+        image_sub                       = message_filters.Subscriber('/camera/color/image_raw', Image)
+        depth_sub                       = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
+        self.ts                         = message_filters.TimeSynchronizer([image_sub, depth_sub], 1)
+
         self.pointcloudPublisher        = rospy.Publisher("/ContourPtCloud", PointCloud, queue_size=1)
         self.originalPtCloudPublisher   = rospy.Publisher("/OriginalPtCloud", PointCloud, queue_size=1)
         self.countourPublisher          = rospy.Publisher('/ContourImage', Image, queue_size=1)
+        self.ts.registerCallback(self.cannyCallback)
         # rospy.Subscriber(self.topicName, Image ,self.ptCloudcallback, queue_size=1)
-        rospy.Subscriber(self.topicName, Image, self.cannyCallback, queue_size=1)
-
+        # rospy.Subscriber(self.topicName, Image, self.cannyCallback, queue_size=1)
 
 
 def workerInterp(x,y,z,plane_model,interp,ctr):
@@ -170,6 +198,6 @@ def outlierCloudInterp(outlier_cloud, plane_model, interp):
     return open3d.utility.Vector3dVector(interpolated_points)
 
 if __name__ == "__main__":
-    tmp = ptCloudNode("/camera/aligned_depth_to_color/")
+    tmp = ptCloudNode("/camera/depth/")
     tmp.readPointCloud()
     rospy.spin()
