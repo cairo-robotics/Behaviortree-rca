@@ -22,6 +22,15 @@
 
 using namespace BT;
 
+
+/**
+ * splitString: Splits string into vector of <x, y, z, q1, q2, q3, q4>
+ * 
+ * @param input     String recieved from blackboard carrying reference pose.
+ * @param delimiter Delimiter for input string.
+ * @return Vector of floats having 7 elements of pose
+ */
+
 std::vector<float> splitString(const std::string input, const char& delimiter) {
 
     std::vector<float> elements;
@@ -35,6 +44,14 @@ std::vector<float> splitString(const std::string input, const char& delimiter) {
     return elements;
 }
 
+/**
+ * createMsg: Creates a ros pose message from the vector of 7 elements
+ * 
+ * @param msg       Pointer to ros message that holds values from the vector.
+ * @param poseVal   Vector obtained from convering Blackboard string to vector.
+ * @return Void return type
+ */
+
 void createMsg (geometry_msgs::Pose* msg, const std::vector<float> poseVal){
     msg->position.x = poseVal[0];
     msg->position.y = poseVal[1];
@@ -44,6 +61,14 @@ void createMsg (geometry_msgs::Pose* msg, const std::vector<float> poseVal){
     msg->orientation.z = poseVal[5];
     msg->orientation.w = poseVal[6];
 }
+
+/**
+ * Creates a string from a Ros pose message to be stored in blackboard
+ * 
+ * @param msg       ROS pose message to be written to blackboard
+ * @param delimiter Delimiter string for the blackboard string
+ * @return String that gets written to the blackboard
+ */
 
 std::string createString(geometry_msgs::Pose* msg, std::string delimiter){
     std::string ans;
@@ -57,12 +82,24 @@ std::string createString(geometry_msgs::Pose* msg, std::string delimiter){
     return ans;
 }
 
+/**
+ *  GripperOpen class that inherits the Behaviortree.CPP Synchronous Action Node class,
+ *  and creates an Action node to open the sawyer gripper
+ */
+
+
 class gripperOpen : public BT::SyncActionNode{
     private:
         ros::NodeHandle _nh;
     public:
         gripperOpen(const std::string& name, const BT::NodeConfiguration& config,ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){}
+
+        /**
+         * GripperOpen class: Tick function that overrides a virtual function to call a service that opens the gripper.
+         * 
+         * @return Node status boolean for the Behaviortree.CPP node
+         */
 
         BT::NodeStatus tick() override{
             // Client code to open the gripper and recieve a response
@@ -84,12 +121,23 @@ class gripperOpen : public BT::SyncActionNode{
 
 };
 
+/**
+ *  GripperClose class that inherits the Behaviortree.CPP Synchronous Action Node class,
+ *  and creates an Action node to close the sawyer gripper
+ */
+
 class gripperClose : public BT::SyncActionNode{
     private:
         ros::NodeHandle _nh;
     public:
         gripperClose(const std::string& name, const BT::NodeConfiguration& config,ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){}
+
+        /**
+         * GripperClose class: Tick function that overrides a virtual function to call a ros-service that closes the gripper.
+         * 
+         * @return Node status boolean for the Behaviortree.CPP node
+         */
 
         BT::NodeStatus tick() override{
             // Client code to open the gripper and recieve a response
@@ -110,6 +158,11 @@ class gripperClose : public BT::SyncActionNode{
         }
 };
 
+/**
+ *  Approach class that inherits the Behaviortree.CPP Synchronous Action Node class,
+ *  and creates an Action node to approach the Ket or to approach the hole in which Ket needs to be placed.
+ */
+
 class approach : public BT::SyncActionNode{
     private:
         ros::NodeHandle _nh;
@@ -119,8 +172,16 @@ class approach : public BT::SyncActionNode{
         approach(const std::string& name, const BT::NodeConfiguration& config, ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){}
 
+        /**
+         * Approach class: Tick function that overrides a virtual function to call a ros-service
+         * that servos to a prestored pose in blackboard named as "approachPose".
+         * 
+         * @return Node status boolean for the Behaviortree.CPP node
+         * @throw  Throws Runtime error if blackboard value is empty
+         */
+
         BT::NodeStatus tick() override{
-            // Call service here
+            // Initialise service
             ros::ServiceClient client = this->_nh.serviceClient<pick_and_place::approach>(std::string("ApproachCmd"));
 
             std::string msg;
@@ -131,7 +192,6 @@ class approach : public BT::SyncActionNode{
                 throw BT::RuntimeError("missing required input [message]");
             }
 
-            // use the method value() to extract the valid message.
             char delimiter = ';';
             std::vector<float> poseVal = splitString(msg, delimiter);
             createMsg(&this->_targetPose, poseVal);
@@ -140,7 +200,6 @@ class approach : public BT::SyncActionNode{
             srv_call.request.approach_pose = this->_targetPose;
             ros::service::waitForService("ApproachCmd", ros::Duration(5));
 
-            // Write to blackboard?
             if (client.call(srv_call)) {
                 ROS_INFO("Server call successful! Response was %d", srv_call.response.approach_reply);
                 return BT::NodeStatus::SUCCESS;
@@ -155,6 +214,12 @@ class approach : public BT::SyncActionNode{
         }
 };
 
+/**
+ *  ServoToPose class that inherits the Behaviortree.CPP Synchronous Action Node class,
+ *  and creates an Action node. To be called to move the arm around freely to another pose. 
+ *  Does not hold any precondition, of any sort of pose extraction.
+ */
+
 class ServoToPose : public BT::SyncActionNode{
     private:
         ros::NodeHandle _nh;
@@ -162,6 +227,14 @@ class ServoToPose : public BT::SyncActionNode{
     public:
         ServoToPose(const std::string& name, const BT::NodeConfiguration& config, ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){}
+
+        /**
+         * ServoToPose class: Tick function that overrides a virtual function to call a ros-service
+         * that servos to a prestored pose in blackboard named as "ServoToPose".
+         * 
+         * @return Node status boolean for the Behaviortree.CPP node
+         * @throw  Throws Runtime error if blackboard value is empty
+         */
 
         BT::NodeStatus tick() override{
             // Read from blackboard
@@ -186,7 +259,6 @@ class ServoToPose : public BT::SyncActionNode{
 
             ros::service::waitForService("ServoToPoseCmd", ros::Duration(5));
 
-            // Write to blackboard?
             if (client.call(srv_call)) {
                 ROS_INFO("Server call successful! Response was %d", srv_call.response.servotopose_reply);
                 return BT::NodeStatus::SUCCESS;
@@ -201,6 +273,13 @@ class ServoToPose : public BT::SyncActionNode{
         }
 };
 
+
+/**
+ *  Retract class that inherits the Behaviortree.CPP Synchronous Action Node class,
+ *  and creates an Action node to approach one of the two preprogrammed positions to head to after picking up the ket.
+ *  To be called after holding the ket and retracting to a pre-defined position and retracting after placing the ket in the hole.
+ */
+
 class retract : public BT::SyncActionNode{
     // TODO: If we have two positions to retract to, how to choose one? Ideally there should be an input from the client that server parses and executes the same
     private:
@@ -209,6 +288,14 @@ class retract : public BT::SyncActionNode{
     public:
         retract(const std::string& name, const BT::NodeConfiguration& config, ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){}
+
+        /**
+         * Retract class: Tick function that overrides a virtual function to call a ros-service
+         * that servos to a prestored pose 
+         * 
+         * @return Node status boolean for the Behaviortree.CPP node
+         * @throw  Throws Runtime error if blackboard value is empty
+         */
 
         BT::NodeStatus tick() override{
             // Call service here
@@ -234,6 +321,12 @@ class retract : public BT::SyncActionNode{
         }
 };
 
+/**
+ *  VisualFeedback class that inherits the Behaviortree.CPP Synchronous Action Node class,
+ *  and creates an Action node to read the topic of DL node to detect where to place the Ket, 
+ *  also writes it to the blackboard to servo to eventually.
+ */
+
 class visualFeedback : public BT::SyncActionNode{
     private:
         ros::NodeHandle _nh;
@@ -252,6 +345,14 @@ class visualFeedback : public BT::SyncActionNode{
             this->_desiredPosition.pose     = msg->pose;
             this->_desiredPosition.header    = msg->header; 
         }
+
+        /**
+         * VisualFeedback class: Tick function spins the node once to collect pose from
+         * the deeplearning node that detects the location at which the ket is to be placed.
+         * 
+         * @return Node status boolean for the Behaviortree.CPP node
+         * @throw  Throws Runtime error if blackboard value is empty
+         */
 
         BT::NodeStatus tick() override{
             // Call service here

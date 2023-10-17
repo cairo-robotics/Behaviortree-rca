@@ -63,7 +63,7 @@ class ptCloudNode():
         self.i          = 0
         self.u_min, self.u_max = pt1[0], pt2[0]
         self.v_min, self.v_max = pt1[1], pt2[1]
-        # Here I create an ellipse of the same major and minor axis as that of the iron KET, then we try to do ICP 
+        # Create an ellipse of the same major and minor axis as that of the iron KET, then we try to do ICP 
         r = RegularPolygon(Point(0, 0), 0.0065, 3)
         self.e1  =   r.incircle
         ket_ellipse = [self.e1.random_point(seed=np.random.uniform(-1,1)).n().coordinates for _ in range(50)]
@@ -154,7 +154,6 @@ class ptCloudNode():
         max_x_arr = np.argwhere(ptCldArr[:,0] == max(ptCldArr[:,0])).T[0]
         # Cropping point cloud
         alighnedbbox  = open3d.geometry.AxisAlignedBoundingBox(np.array([0, -np.inf, min(ptCldArr[:,2])]), np.array([np.inf, 0, max(ptCldArr[:,2])]))
-        print(alighnedbbox)
         self.open3dptCloud.crop(alighnedbbox)
         print("Time to update Pointclouds: ", time.time() - tt)
         header = std_msgs.msg.Header()
@@ -165,15 +164,31 @@ class ptCloudNode():
         mean_z = np.mean(np.asarray(self.open3dptCloud.points)[:,2])
         
         for i in self.open3dptCloud.points:
-            if(i[0] > 0 and i[1] < 0): # Only fourth quadrant points taken, since the block is supposed to be in that quadrant only
-                contourPtCloud.points.append(Point32(i[0], i[1], mean_z))
+            contourPtCloud.points.append(Point32(i[0], i[1], mean_z))
+                
+        referencePtCloud        = open3d.geometry.PointCloud()
+        referencePtCloud.points = open3d.utility.Vector3dVector(np.array([np.array([i[0], i[1], mean_z]) for i in self.ket_ellipse]))
+        referencePtCloud.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=50))
         
-        for i in self.ket_ellipse:
-                contourPtCloud.points.append(Point32(i[0], i[1], mean_z))
+        loss            = open3d.pipelines.registration.TukeyLoss(k=0.0004)
+        p2p             = open3d.pipelines.registration.TransformationEstimationPointToPlane(loss)
+        trans_init      = np.eye(4)
+        trans_init[0,3] = 0.05
+        trans_init[1,3] = -0.014
+        trans_init[2,3] = 0.0
+        trans_init[3,3] = 1.0
+        threshold       = 0.5
         
+        self.open3dptCloud.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=50))
+        reg_p2p = open3d.pipelines.registration.registration_icp(referencePtCloud, self.open3dptCloud, threshold, trans_init,p2p)
+        trans_init[:,3] =  reg_p2p.transformation[:,3]
 
+        referencePtCloud.transform(trans_init)
+        print(trans_init)
+        for i in referencePtCloud.points:
+            contourPtCloud.points.append(Point32(i[0], i[1], mean_z))
+            
         self.pointcloudPublisher.publish(contourPtCloud)        
-        
         self.rate.sleep()
 
     def readPointCloud(self):
