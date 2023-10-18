@@ -7,10 +7,15 @@ assuming Moveit, ROS1(Noetic), Behaviortree cpp v3 is installed in the system ru
 catkin build
 ```
 
-SubTree Design
+# SubTree Design:
 
-![Subtrees](design.png)
+![Subtrees](design.png=100x20)
 
-![HandEyeCalibrationOutput](CalibrationOutput.png)
+# Hand Eye calibration output
 
+![HandEyeCalibrationOutput](CalibrationOutput.png=100x20)
+
+# Pick Pose determination output
+
+![PickPoseDeterminationOutput](PickPose.png=100x20)
 

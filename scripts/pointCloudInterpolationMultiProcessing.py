@@ -31,7 +31,7 @@ effort: [0.0, -0.9, -30.044, -12.944, -1.352, 2.74, 0.22, 0.104, 0.0]
 
 import rospy,message_filters
 import open3d
-import cv2, os, copy
+import cv2, os, copy, math
 import matplotlib.pyplot as plt
 import numpy as np
 from sympy import Point, Ellipse, Circle, RegularPolygon
@@ -41,10 +41,11 @@ import time
 import tf2_ros
 from sensor_msgs.msg import Image, CameraInfo
 from sensor_msgs.msg import PointCloud
-from geometry_msgs.msg import Point32
-import std_msgs.msg
+from geometry_msgs.msg import Point32, PoseStamped, Pose
+from std_msgs.msg import Header
 
 from tf2_msgs.msg import TFMessage
+from tf.transformations import quaternion_from_euler
 from scipy.spatial.transform import Rotation as R
 from scipy import stats
 from skimage.transform import hough_ellipse
@@ -65,6 +66,7 @@ class ptCloudNode():
         self.i          = 0
         self.u_min, self.u_max = pt1[0], pt2[0]
         self.v_min, self.v_max = pt1[1], pt2[1]
+        self.holdDistBottom = 0.038
         # Create an ellipse of the same major and minor axis as that of the iron KET, then we try to do ICP 
         r = RegularPolygon(Point(0, 0), 0.0065, 3)
         self.e1  =   r.incircle
@@ -161,22 +163,21 @@ class ptCloudNode():
         tableDepth          = stats.mode(depthImg.flatten()).mode[0]
         modifiedDepthImage.fill(np.int16(tableDepth))
         # Here calculate all the non zero points and create an image with values from original image values (r,g,b) and store the rest as 0
-        self.depthContour = (modifiedDepthImage & edges.astype(np.int16)).astype(np.float32)     
+        self.depthContour                                   = (modifiedDepthImage & edges.astype(np.int16)).astype(np.float32)     
+        self.depthContour[self.depthContour!=0]             = np.float32(tableDepth)
         self.depthContour[int(depthPt[0]), int(depthPt[1])] = np.float32(tableDepth)
-        self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
         tt = time.time()
         self.intrinsics_o3d = open3d.camera.PinholeCameraIntrinsic(height=int(self.cam_info.height), width=int(self.cam_info.width), intrinsic_matrix=self.intrinsic_mtrx)
         self.open3dptCloud  = open3d.geometry.PointCloud.create_from_depth_image(open3d.geometry.Image(self.depthContour.astype(np.uint16)), self.intrinsics_o3d)
         
         # 3D point og ket center is depthPt in image plane we take this to 3D plane in Camera frame: 
         tempCloud                           = np.zeros_like(self.depthContour.astype(np.float32))
-        tempCloud[int(depthPt[0]), int(depthPt[1])]   = np.float32(np.max(self.depthContour))
+        tempCloud[int(depthPt[0]), int(depthPt[1])]   = np.float32(tableDepth)
         self.depthPt        = open3d.geometry.PointCloud.create_from_depth_image(open3d.geometry.Image(tempCloud.astype(np.uint16)), self.intrinsics_o3d)
-        
         self.open3dptCloud.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]) # Check here http://www.open3d.org/docs/latest/tutorial/Basic/rgbd_image.html
         self.depthPt.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
 
-        header = std_msgs.msg.Header()
+        header = Header()
         header.stamp = rospy.Time.now()
         header.frame_id = 'camera_depth_optical_frame'
         
@@ -189,8 +190,23 @@ class ptCloudNode():
         
         for i in self.depthPt.points:
             print("Found Pt: ", i[0], i[1], i[2])
-            contourPtCloud.points.append(Point32(i[0], i[1], i[2]))    
-                    
+            contourPtCloud.points.append(Point32(i[0], i[1], i[2]))            
+        
+        pose_val = PoseStamped()
+        pose_val.header          = header
+        pose_val.pose.position.x = self.depthPt.points[0][0]
+        pose_val.pose.position.y = self.depthPt.points[0][1]
+        pose_val.pose.position.z = self.depthPt.points[0][2] + self.holdDistBottom
+        print("Point :   ", pose_val.pose.position.x, pose_val.pose.position.y, pose_val.pose.position.z )
+        q = quaternion_from_euler(math.pi, 0, 0)    
+            
+        pose_val.pose.orientation.x = q[0]
+        pose_val.pose.orientation.y = q[1]
+        pose_val.pose.orientation.z = q[2]
+        pose_val.pose.orientation.w = q[3]
+        
+        self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
+        self.pickPosePublisher.publish(pose_val)
         self.pointcloudPublisher.publish(contourPtCloud)        
         self.rate.sleep()
 
@@ -207,6 +223,7 @@ class ptCloudNode():
         self.pointcloudPublisher        = rospy.Publisher("/ContourPtCloud", PointCloud, queue_size=1)
         self.originalPtCloudPublisher   = rospy.Publisher("/OriginalPtCloud", PointCloud, queue_size=1)
         self.countourPublisher          = rospy.Publisher('/ContourImage', Image, queue_size=1)
+        self.pickPosePublisher          = rospy.Publisher("/visionFeedback/MeanValue", PoseStamped, queue_size=1)
         self.ts.registerCallback(self.cannyCallback)
         # rospy.Subscriber(self.topicName, Image ,self.ptCloudcallback, queue_size=1)
         # rospy.Subscriber(self.topicName, Image, self.cannyCallback, queue_size=1)
