@@ -9,13 +9,14 @@ catkin build
 
 # SubTree Design:
 
-![Subtrees](design.png=100x20)
+<img src="design.png" alt="Subtrees" width="200"/>
 
 # Hand Eye calibration output
 
-![HandEyeCalibrationOutput](CalibrationOutput.png=100x20)
+<img src="CalibrationOutput.png" alt="HandEyeCalibrationOutput" width="200"/>
+
 
 # Pick Pose determination output
 
-![PickPoseDeterminationOutput](PickPose.png=100x20)
+<img src="PickPose.png" alt="PickPoseDeterminationOutput" width="200"/>
 
