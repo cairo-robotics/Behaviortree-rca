@@ -119,7 +119,7 @@ class CommandServer():
         return _approach.approachResponse(True)
 
     def _servo_to_pose(self, servoToPose_msg, timeout=7.0):
-        """An *incredibly simple* linearly-interpolated Cartesian move
+        """A Cartesian move
 
         Args:
             pose (rosmsg Pose): Pose to servo to
@@ -152,7 +152,9 @@ class CommandServer():
         """Move to pose at a hoverdistance
 
         Args:
-            cmd (Bool): Dummy variable requested from the client
+            cmd (Bool): Choose one of the two positions to be retracted to
+                        True: Position over Ket,
+                        False: Position over hole
 
         Returns:
             retract_reply(Bool): Success/Failure reply

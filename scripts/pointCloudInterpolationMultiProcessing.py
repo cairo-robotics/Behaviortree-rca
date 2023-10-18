@@ -46,6 +46,8 @@ import std_msgs.msg
 
 from tf2_msgs.msg import TFMessage
 from scipy.spatial.transform import Rotation as R
+from scipy import stats
+from skimage.transform import hough_ellipse
 from cv_bridge import CvBridge
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
@@ -126,7 +128,7 @@ class ptCloudNode():
         Args:
             image (ros message image): Image message recieved from the topic
         """
-        self.i                  += 11
+        self.i                  += 1
         self.intrinsic_mtrx     = np.array(self.cam_info.K)
         self.intrinsic_mtrx     = self.intrinsic_mtrx.reshape((3,3))
         bridge                  = CvBridge()
@@ -140,54 +142,55 @@ class ptCloudNode():
         
         SmoothedImage           = cv2.inRange(SmoothedImage, (100,0,0), (255,255,255))
         edges                   = cv2.Canny(SmoothedImage.astype(np.uint8), 50, 55)
+        # Finding contours in the smooth edges from HSV space to fit ellipse and find the location of the KET
+        contours            = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        for cc in contours[0]:
+            print("Contour Area: ", cv2.contourArea(cc))
+            if cv2.contourArea(cc) >= 300 and cv2.contourArea(cc) <= 450: # This condition only holds when the Sawyer arm is 90 cms above the ket
+                ellipse     = cv2.fitEllipse(cc)
+                depthPt     = np.flip(ellipse[0])
+                print(int(depthPt[0]), int(depthPt[1]))
         
+        if 'depthPt' in locals():
+            pass
+        else:
+            # Add an internal logging thing here
+            raise rospy.ROSInterruptException()
+             
+        modifiedDepthImage  = copy.deepcopy(depthImg)
+        tableDepth          = stats.mode(depthImg.flatten()).mode[0]
+        modifiedDepthImage.fill(np.int16(tableDepth))
         # Here calculate all the non zero points and create an image with values from original image values (r,g,b) and store the rest as 0
-        edges  = edges.astype(np.float32)
-        self.depthContour = (depthImg & edges.astype(np.int16)).astype(np.float32)     
-        self.countourPublisher.publish(bridge.cv2_to_imgmsg(edges.astype(np.uint8)))
+        self.depthContour = (modifiedDepthImage & edges.astype(np.int16)).astype(np.float32)     
+        self.depthContour[int(depthPt[0]), int(depthPt[1])] = np.float32(tableDepth)
+        self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
         tt = time.time()
-        self.intrinsics_o3d = open3d.camera.PinholeCameraIntrinsic(int(self.cam_info.width), int(self.cam_info.height), self.intrinsic_mtrx)
-        self.open3dptCloud = open3d.geometry.PointCloud.create_from_depth_image(open3d.geometry.Image(self.depthContour.astype(np.uint16)), self.intrinsics_o3d)
+        self.intrinsics_o3d = open3d.camera.PinholeCameraIntrinsic(height=int(self.cam_info.height), width=int(self.cam_info.width), intrinsic_matrix=self.intrinsic_mtrx)
+        self.open3dptCloud  = open3d.geometry.PointCloud.create_from_depth_image(open3d.geometry.Image(self.depthContour.astype(np.uint16)), self.intrinsics_o3d)
+        
+        # 3D point og ket center is depthPt in image plane we take this to 3D plane in Camera frame: 
+        tempCloud                           = np.zeros_like(self.depthContour.astype(np.float32))
+        tempCloud[int(depthPt[0]), int(depthPt[1])]   = np.float32(np.max(self.depthContour))
+        self.depthPt        = open3d.geometry.PointCloud.create_from_depth_image(open3d.geometry.Image(tempCloud.astype(np.uint16)), self.intrinsics_o3d)
+        
         self.open3dptCloud.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]) # Check here http://www.open3d.org/docs/latest/tutorial/Basic/rgbd_image.html
-        ptCldArr = np.asarray(self.open3dptCloud.points)
-        # max x value array:
-        max_x_arr = np.argwhere(ptCldArr[:,0] == max(ptCldArr[:,0])).T[0]
-        # Cropping point cloud
-        alighnedbbox  = open3d.geometry.AxisAlignedBoundingBox(np.array([0, -np.inf, min(ptCldArr[:,2])]), np.array([np.inf, 0, max(ptCldArr[:,2])]))
-        self.open3dptCloud.crop(alighnedbbox)
-        print("Time to update Pointclouds: ", time.time() - tt)
+        self.depthPt.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+
         header = std_msgs.msg.Header()
         header.stamp = rospy.Time.now()
         header.frame_id = 'camera_depth_optical_frame'
+        
         contourPtCloud = PointCloud()
         contourPtCloud.header = header
-        mean_z = np.mean(np.asarray(self.open3dptCloud.points)[:,2])
-        
-        for i in self.open3dptCloud.points:
-            contourPtCloud.points.append(Point32(i[0], i[1], mean_z))
                 
-        referencePtCloud        = open3d.geometry.PointCloud()
-        referencePtCloud.points = open3d.utility.Vector3dVector(np.array([np.array([i[0], i[1], mean_z]) for i in self.ket_ellipse]))
-        referencePtCloud.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=50))
+        for i in self.open3dptCloud.points:
+            contourPtCloud.points.append(Point32(i[0], i[1], i[2]))
         
-        loss            = open3d.pipelines.registration.TukeyLoss(k=0.0004)
-        p2p             = open3d.pipelines.registration.TransformationEstimationPointToPlane(loss)
-        trans_init      = np.eye(4)
-        trans_init[0,3] = 0.05
-        trans_init[1,3] = -0.014
-        trans_init[2,3] = 0.0
-        trans_init[3,3] = 1.0
-        threshold       = 0.5
         
-        self.open3dptCloud.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=50))
-        reg_p2p = open3d.pipelines.registration.registration_icp(referencePtCloud, self.open3dptCloud, threshold, trans_init,p2p)
-        trans_init[:,3] =  reg_p2p.transformation[:,3]
-
-        referencePtCloud.transform(trans_init)
-        print(trans_init)
-        for i in referencePtCloud.points:
-            contourPtCloud.points.append(Point32(i[0], i[1], mean_z))
-            
+        for i in self.depthPt.points:
+            print("Found Pt: ", i[0], i[1], i[2])
+            contourPtCloud.points.append(Point32(i[0], i[1], i[2]))    
+                    
         self.pointcloudPublisher.publish(contourPtCloud)        
         self.rate.sleep()
 
