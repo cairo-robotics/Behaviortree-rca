@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/jsontestrunner_exe.dir/main.cpp.o -o ../../bin/jsontestrunner_exe  -Wl,-rpath,/home/dt/HRIPapers/BehaviorTreeWork/src/jsoncpp/build/lib ../../lib/libjsoncpp.so.1.9.5 

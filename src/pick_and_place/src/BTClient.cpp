@@ -1,4 +1,6 @@
 #include <iostream>
+#include <iomanip>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <sstream>
@@ -6,19 +8,24 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
+#include "jsoncpp/json/json.h"
+
 
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Pose.h>
+#include <tf/transform_datatypes.h>
+
 #include <behaviortree_cpp_v3/behavior_tree.h>
 #include <behaviortree_cpp_v3/bt_factory.h>
 #include <behaviortree_cpp_v3/action_node.h>
+#include <ros/callback_queue.h>
 #include <ros/ros.h>
 
 #include "pick_and_place/approach.h"
 #include "pick_and_place/gripper.h"
 #include "pick_and_place/retract.h"
 #include "pick_and_place/servotoPose.h"
-
 
 using namespace BT;
 
@@ -80,6 +87,34 @@ std::string createString(geometry_msgs::Pose* msg, std::string delimiter){
     ans += std::to_string(msg->orientation.z) + delimiter;
     ans += std::to_string(msg->orientation.w) + delimiter;
     return ans;
+}
+
+/**
+ * Creates a pose from a json file stored on the filesystem.
+ * 
+ * @param fileName  FileName to be read, ends with .json.
+ * @return tf::Transform type object that has static transform.
+ */
+
+tf::Transform poseFromJSON(std::string fileName){
+    Json::Value root;
+    std::ifstream ifs;
+    ifs.open(&fileName[0]);
+    
+    Json::CharReaderBuilder builder;
+    builder["collectComments"] = false;
+    JSONCPP_STRING errs;
+    if(!Json::parseFromStream(builder, ifs, &root, &errs)){
+        std::cout << errs << std::endl;
+    }
+    std::string names("CalibrationPose");
+    return tf::Transform(tf::Matrix3x3(tf::Quaternion(  root[names][3].asDouble(),
+                                                        root[names][4].asDouble(),
+                                                        root[names][5].asDouble(),
+                                                        root[names][6].asDouble())),
+                                       tf::Vector3(     root[names][0].asDouble(),
+                                                        root[names][1].asDouble(),
+                                                        root[names][2].asDouble()));
 }
 
 /**
@@ -335,15 +370,13 @@ class visualFeedback : public BT::SyncActionNode{
     public:
         visualFeedback(const std::string& name, const BT::NodeConfiguration& config, ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){
-            int argc = 0;
-            char **argv = NULL;
-            ros::init(argc, argv, "visualFeedbackReader");
             this->_desiredPosition.header.seq = -1; // Default setting to check weather the message has been modified by callback or not;
         }
 
         void visualFeedbackCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
             this->_desiredPosition.pose     = msg->pose;
             this->_desiredPosition.header    = msg->header; 
+            std::string poseString = createString(&this->_desiredPosition.pose, std::string(";"));
         }
 
         /**
@@ -356,20 +389,32 @@ class visualFeedback : public BT::SyncActionNode{
 
         BT::NodeStatus tick() override{
             // Call service here
+            std::cout << "This should execute first \n";
+            ros::Rate r(10);
             ros::Subscriber sub = this->_nh.subscribe("/visionFeedback/MeanValue", 1, &visualFeedback::visualFeedbackCallback, this);
-
-            ros::spinOnce();
-
+            for(int i = 0 ; i < 10; i++){
+                ros::spinOnce();
+                r.sleep();
+            }
+     
             if(!(this->_desiredPosition.header.seq == -1)){
+                // Convert pose in camera frame to gripper frame and store in blackboard
+                tf::Transform c_T_K, g_T_c;
+                tf::poseMsgToTF(this->_desiredPosition.pose, c_T_K);
+                g_T_c = poseFromJSON("src/pick_and_place/src/GripperToCameraTransform.json");
+                tf::Transform finalGoal = g_T_c*c_T_K;
+                geometry_msgs::Pose finalGoalPose;
+                tf::poseTFToMsg(finalGoal, finalGoalPose);
+
                 // Write variable to the blackboard
-                std::string poseString = createString(&this->_desiredPosition.pose, std::string(";"));
-                setOutput("ServoToPose", poseString);
-                ROS_INFO("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
+                std::string poseString = createString(&finalGoalPose, std::string(";"));
+                BT::TreeNode::setOutput(std::string("ServoToPose"), poseString);
+                ROS_INFO("[VisualFeedbackNode] Executed Successfully");
                 return BT::NodeStatus::SUCCESS;
             }
             else{
-                ROS_ERROR("[MoveitCartesianPathPlanning] Error when executing plan {move_group->execute(plan)}");
-                return BT::NodeStatus::FAILURE;
+                ROS_INFO("[VisualFeedbackNode] Error in recieving message check server {pick pose determining server}");
+                return BT::NodeStatus::SUCCESS;
             }
         }
 
@@ -434,6 +479,16 @@ static const char* testTree = R"(
  </root>
 )";
 
+static const char* testVisualFeedback = R"(
+ <root BTCPP_format="3">
+    <BehaviorTree ID="DemoTry">
+        <Sequence>
+            <visualFeedback/>
+        </Sequence>
+    </BehaviorTree ID="DemoTry">
+ </root>
+)";
+
 int main(int argc, char **argv){
     ros::init(argc, argv, "BehaviorTreeNode");
     ros::NodeHandle nh_;
@@ -471,14 +526,20 @@ int main(int argc, char **argv){
         return std::make_unique<retract>(name, config, nh_);
     };
 
+    BT::NodeBuilder visualFeedback_node =
+    [nh_](const std::string& name, const NodeConfiguration& config)
+    {
+        return std::make_unique<visualFeedback>(name, config, nh_);
+    };
+
     factory.registerBuilder<gripperClose>("gripperClose", gripper_close);
     factory.registerBuilder<gripperOpen>("gripperOpen", gripper_open);
     factory.registerBuilder<retract>("retract", retract_node);
+    factory.registerBuilder<retract>("visualFeedback", visualFeedback_node);
 
-    auto tree = factory.createTreeFromText(::testTree);
+    auto tree = factory.createTreeFromText(::testVisualFeedback);
 
     tree.tickRootWhileRunning();
     spinner.stop();
-    std::cout << "Exec Test" << std::endl;
     return 0;
 }

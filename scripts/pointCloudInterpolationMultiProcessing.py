@@ -142,8 +142,8 @@ class ptCloudNode():
         SmoothedImage           = cv2.cvtColor(SmoothedImage, cv2.COLOR_BGR2HSV)
         print("Time to update images: ", time.time() - tt)
         
-        SmoothedImage           = cv2.inRange(SmoothedImage, (100,0,0), (255,255,255))
-        edges                   = cv2.Canny(SmoothedImage.astype(np.uint8), 50, 55)
+        SmoothedImage           = cv2.inRange(SmoothedImage, (150,0,0), (255,255,255))
+        edges                   = cv2.Canny(SmoothedImage.astype(np.uint8), 60, 65)
         # Finding contours in the smooth edges from HSV space to fit ellipse and find the location of the KET
         contours            = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         for cc in contours[0]:
@@ -157,7 +157,8 @@ class ptCloudNode():
             pass
         else:
             # Add an internal logging thing here
-            raise rospy.ROSInterruptException()
+            rospy.logwarn("Failed to find depth point skipping on publishing") 
+            return 0
              
         modifiedDepthImage  = copy.deepcopy(depthImg)
         tableDepth          = stats.mode(depthImg.flatten()).mode[0]

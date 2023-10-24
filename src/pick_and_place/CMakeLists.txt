@@ -1,6 +1,10 @@
 cmake_minimum_required (VERSION 3.12) # CMP0069 NEW
 project(pick_and_place)
 
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JSONCPP jsoncpp)
+
 # add_definitions(-std=c++11)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -150,7 +154,8 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 
 add_executable(pick_and_place src/BTClient.cpp)
-target_link_libraries(pick_and_place ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+set_source_files_properties(pick_and_place PROPERTIES COMPILE_FLAGS -DWITH_JSONCPP=ON)
+target_link_libraries(pick_and_place ${catkin_LIBRARIES} ${Boost_LIBRARIES} /usr/lib/x86_64-linux-gnu/libjsoncpp.so)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

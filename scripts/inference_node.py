@@ -22,12 +22,13 @@ counter = 0
 class DetectHole:
     def __init__(self) -> None:
         self.weights        = "NIST_board.pt"
+        self.baseName       = "/camera/depth/"  
         self.imgsz          = 640
         self.trace          = False
         self.device         = "cpu"
         self.half           = False
-        self.conf_thres     = 0.5
-        self.iou_thres      = 0.5
+        self.conf_thres     = 0.9
+        self.iou_thres      = 0.1
         self.classes        = ''
         self.agnostic_nms   = False
         self.inferenceImagepub = rospy.Publisher('/visionFeedback/ethernetDetector', Image, queue_size=10)
@@ -129,33 +130,34 @@ class DetectHole:
         # and we should have our goal right in the middle of this
         
         # create overall point cloud
-        cam_info = rospy.wait_for_message(self.baseName + "camera_info", CameraInfo)
-        self.intrinsic_mtrx = np.array(cam_info.K)
-        self.intrinsic_mtrx = self.intrinsic_mtrx.reshape((3,3))
+        # cam_info = rospy.wait_for_message(self.baseName + "camera_info", CameraInfo)
+        # self.intrinsic_mtrx = np.array(cam_info.K)
+        # self.intrinsic_mtrx = self.intrinsic_mtrx.reshape((3,3))
         
-        self.intrinsics_o3d = o3d.camera.PinholeCameraIntrinsic(int(cam_info.width), int(cam_info.height), self.intrinsic_mtrx)
+        # self.intrinsics_o3d = o3d.camera.PinholeCameraIntrinsic(int(cam_info.width), int(cam_info.height), self.intrinsic_mtrx)
         
-        depthImg = bridge.imgmsg_to_cv2(alighnedDepthImg)
+        # depthImg = bridge.imgmsg_to_cv2(alighnedDepthImg)
         
-        total_ptCloud = o3d.geometry.PointCloud.create_from_depth_image(o3d.geometry.Image(depthImg.astype(np.uint16)), self.intrinsics_o3d)
-        x_min, y_min = min(int(xyxy[0]), int(xyxy[2])), min(int(xyxy[1]), int(xyxy[3]))
-        x_max, y_max = max(int(xyxy[0]), int(xyxy[2])), max(int(xyxy[1]), int(xyxy[3]))
+        # total_ptCloud = o3d.geometry.PointCloud.create_from_depth_image(o3d.geometry.Image(depthImg.astype(np.uint16)), self.intrinsics_o3d)
+        # x_min, y_min = min(int(xyxy[0]), int(xyxy[2])), min(int(xyxy[1]), int(xyxy[3]))
+        # x_max, y_max = max(int(xyxy[0]), int(xyxy[2])), max(int(xyxy[1]), int(xyxy[3]))
         
-        part_ptCloud = o3d.geometry.PointCloud.create_from_depth_image(o3d.geometry.Image(depthImg[x_min:x_max, y_min:y_max].astype(np.uint16)), self.intrinsics_o3d)
-        # Left shifted points in the point cloud
-        left_3dpt   = [min(part_ptCloud.points[:,0]) - 0.059, min(part_ptCloud.points[:,1])]
-        right_3dpt  = [max(part_ptCloud.points[:,0]) - 0.059, max(part_ptCloud.points[:,1])]
+        # part_ptCloud = o3d.geometry.PointCloud.create_from_depth_image(o3d.geometry.Image(depthImg[x_min:x_max, y_min:y_max].astype(np.uint16)), self.intrinsics_o3d)
+        # # Left shifted points in the point cloud
+        # breakpoint()
+        # left_3dpt   = [min(part_ptCloud.points[:,0]) - 0.059, min(part_ptCloud.points[:,1])]
+        # right_3dpt  = [max(part_ptCloud.points[:,0]) - 0.059, max(part_ptCloud.points[:,1])]
         
-        mean_pt     = [np.mean([left_3dpt[0], right_3dpt[0]]), np.mean([left_3dpt[1], right_3dpt[1]]), np.mean(part_ptCloud.points[:,2])] # Middle of object detection x, middle of object detection y, mean of all z values in object plane
-        pt = Point()
-        pt.x, pt.y, pt.z = mean_pt[0], mean_pt[1], mean_pt[2]
-        h1 = Header()
-        h1.seq = counter
-        h1.stamp = rospy.Time.now()
-        pubPt  = PointStamped()
-        pubPt.header = h1
-        pubPt.point  = pt
-        self.goalPtPub.publish(pt)
+        # mean_pt     = [np.mean([left_3dpt[0], right_3dpt[0]]), np.mean([left_3dpt[1], right_3dpt[1]]), np.mean(part_ptCloud.points[:,2])] # Middle of object detection x, middle of object detection y, mean of all z values in object plane
+        # pt = Point()
+        # pt.x, pt.y, pt.z = mean_pt[0], mean_pt[1], mean_pt[2]
+        # h1 = Header()
+        # h1.seq = counter
+        # h1.stamp = rospy.Time.now()
+        # pubPt  = PointStamped()
+        # pubPt.header = h1
+        # pubPt.point  = pt
+        # self.goalPtPub.publish(pt)
 
     def startNode(self):
         """Initialises node and calls subscriber
