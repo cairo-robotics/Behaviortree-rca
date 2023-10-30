@@ -9,7 +9,9 @@ from geometry_msgs.msg import (
 
 from pick_and_place.srv import _gripper, _approach, _servotoPose, _retract
 
-from tf.transformations import quaternion_slerp
+from tf.transformations import quaternion_slerp, quaternion_matrix
+import tf
+import numpy as np
 import intera_interface 
 
 class CommandServer():
@@ -122,15 +124,36 @@ class CommandServer():
         """A Cartesian move
 
         Args:
-            pose (rosmsg Pose): Pose to servo to
-            time (float, optional): Rospy rate. Defaults to 4.0.
-            steps (float, optional): Steps of interpolation for the trajectory. Defaults to 400.0.
-
+            servoToPose_msg (rosmsg Pose): Pose to servo to in gripper's coordinate frame
+            timeout (seconds):             Timeout for calling the service 
         Returns:
             servotopose_reply: Success/Failure reply
         """
+        
+        transform_base, transform_fk        = tf.transformations.identity_matrix(), tf.transformations.identity_matrix()
+        transform_fk_msg                    = (self._limb.fk_request(self._limb.joint_angles())).pose_stamp[0].pose
+        transform_fk[:3, 3]                 = np.array([transform_fk_msg.position.x, transform_fk_msg.position.y,transform_fk_msg.position.z])
+        transform_fk[:3,:3]                 = quaternion_matrix(np.array([transform_fk_msg.orientation.x, transform_fk_msg.orientation.y, transform_fk_msg.orientation.z, transform_fk_msg.orientation.w]))[:3, :3]
+        transform_base[:3, 3]               = np.array([servoToPose_msg.servo_to_pose.position.x,servoToPose_msg.servo_to_pose.position.y,servoToPose_msg.servo_to_pose.position.z])
+        transform_base[:3,:3]               = quaternion_matrix(np.array([servoToPose_msg.servo_to_pose.orientation.x, servoToPose_msg.servo_to_pose.orientation.y, servoToPose_msg.servo_to_pose.orientation.z, servoToPose_msg.servo_to_pose.orientation.w]))[:3, :3]
+        transform_base                      = (np.dot(transform_fk, np.linalg.inv(transform_base)))
+        print(transform_base, transform_fk_msg)
+        breakpoint()
+        qq                                  = tf.transformations.quaternion_from_matrix(transform_base)
+        servo_to_pose                       = Pose(position=Point(
+                                                        x=transform_base[0,3],
+                                                        y=transform_base[1,3],
+                                                        z=transform_base[2,3],
+                                                    ),
+                                                    orientation=Quaternion(
+                                                        x=qq[0],
+                                                        y=qq[1],
+                                                        z=qq[2],
+                                                        w=qq[3],
+                                                    ))
+        
         try:
-            joint_angles = self._limb.ik_request(servoToPose_msg.servo_to_pose, self._tip_name)
+            joint_angles = self._limb.ik_request(servo_to_pose, self._tip_name)
         except Exception as e:
             self._loginfo("ServoToPoseNode", e)
             return _servotoPose.servotoPoseResponse(False) 

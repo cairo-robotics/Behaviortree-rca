@@ -142,10 +142,10 @@ class ptCloudNode():
         SmoothedImage           = cv2.cvtColor(SmoothedImage, cv2.COLOR_BGR2HSV)
         print("Time to update images: ", time.time() - tt)
         
-        SmoothedImage           = cv2.inRange(SmoothedImage, (150,0,0), (255,255,255))
-        edges                   = cv2.Canny(SmoothedImage.astype(np.uint8), 60, 65)
+        SmoothedImage           = cv2.inRange(SmoothedImage, (180,0,0), (255,255,255))
+        edges                   = cv2.Canny(SmoothedImage.astype(np.uint8), 70, 100)
         # Finding contours in the smooth edges from HSV space to fit ellipse and find the location of the KET
-        contours            = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        contours            = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
         for cc in contours[0]:
             print("Contour Area: ", cv2.contourArea(cc))
             if cv2.contourArea(cc) >= 300 and cv2.contourArea(cc) <= 450: # This condition only holds when the Sawyer arm is 90 cms above the ket
@@ -199,7 +199,8 @@ class ptCloudNode():
         pose_val.pose.position.y = self.depthPt.points[0][1]
         pose_val.pose.position.z = self.depthPt.points[0][2] + self.holdDistBottom
         print("Point :   ", pose_val.pose.position.x, pose_val.pose.position.y, pose_val.pose.position.z )
-        q = quaternion_from_euler(math.pi, 0, 0)    
+        # TODO Fix here
+        q = quaternion_from_euler(0, 0, 0)    
             
         pose_val.pose.orientation.x = q[0]
         pose_val.pose.orientation.y = q[1]

@@ -274,13 +274,13 @@ class ServoToPose : public BT::SyncActionNode{
         BT::NodeStatus tick() override{
             // Read from blackboard
             std::string msg;
-            BT::TreeNode::getInput(std::string("ServoToPose"), msg);
+            BT::TreeNode::getInput("ServoToPose", msg);
 
             // Check if expected is valid. If not, throw its error
             if (msg == ""){
                 throw BT::RuntimeError("missing required input [message]");
             }
-
+            std::cout << "ServoToPose_msg: " << msg << std::endl; 
             // use the method value() to extract the valid message.
             char delimiter = ';';
             std::vector<float> poseVal = splitString(msg, delimiter);
@@ -291,7 +291,7 @@ class ServoToPose : public BT::SyncActionNode{
             pick_and_place::servotoPose srv_call;
 
             srv_call.request.servo_to_pose = this->_targetPose;
-
+            std::cout << this->_targetPose;
             ros::service::waitForService("ServoToPoseCmd", ros::Duration(5));
 
             if (client.call(srv_call)) {
@@ -402,14 +402,14 @@ class visualFeedback : public BT::SyncActionNode{
                 tf::Transform c_T_K, g_T_c;
                 tf::poseMsgToTF(this->_desiredPosition.pose, c_T_K);
                 g_T_c = poseFromJSON("src/pick_and_place/src/GripperToCameraTransform.json");
-                tf::Transform finalGoal = g_T_c*c_T_K;
+                tf::Transform finalGoal = g_T_c.inverse()*c_T_K;
                 geometry_msgs::Pose finalGoalPose;
                 tf::poseTFToMsg(finalGoal, finalGoalPose);
 
                 // Write variable to the blackboard
                 std::string poseString = createString(&finalGoalPose, std::string(";"));
                 BT::TreeNode::setOutput(std::string("ServoToPose"), poseString);
-                ROS_INFO("[VisualFeedbackNode] Executed Successfully");
+                ROS_INFO("[VisualFeedbackNode] Executed Successfully ");
                 return BT::NodeStatus::SUCCESS;
             }
             else{
@@ -483,7 +483,8 @@ static const char* testVisualFeedback = R"(
  <root BTCPP_format="3">
     <BehaviorTree ID="DemoTry">
         <Sequence>
-            <visualFeedback/>
+            <visualFeedback ServoToPose="{ServoToPose}"/>
+            <ServoToPose ServoToPose="{ServoToPose}"/>
         </Sequence>
     </BehaviorTree ID="DemoTry">
  </root>
@@ -534,8 +535,9 @@ int main(int argc, char **argv){
 
     factory.registerBuilder<gripperClose>("gripperClose", gripper_close);
     factory.registerBuilder<gripperOpen>("gripperOpen", gripper_open);
+    factory.registerBuilder<ServoToPose>("ServoToPose", servo_to_pose_node);
     factory.registerBuilder<retract>("retract", retract_node);
-    factory.registerBuilder<retract>("visualFeedback", visualFeedback_node);
+    factory.registerBuilder<visualFeedback>("visualFeedback", visualFeedback_node);
 
     auto tree = factory.createTreeFromText(::testVisualFeedback);
 

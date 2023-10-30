@@ -1,3 +1,13 @@
+'''
+Pose over NIST board that's ideal 
+
+
+
+
+
+'''
+
+
 import open3d as o3d
 from cv_bridge import CvBridge
 import torch, time
@@ -27,8 +37,8 @@ class DetectHole:
         self.trace          = False
         self.device         = "cpu"
         self.half           = False
-        self.conf_thres     = 0.9
-        self.iou_thres      = 0.1
+        self.conf_thres     = 0.99
+        self.iou_thres      = 0.2
         self.classes        = ''
         self.agnostic_nms   = False
         self.inferenceImagepub = rospy.Publisher('/visionFeedback/ethernetDetector', Image, queue_size=10)
