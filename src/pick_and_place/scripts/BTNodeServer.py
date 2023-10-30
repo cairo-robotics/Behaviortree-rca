@@ -138,7 +138,6 @@ class CommandServer():
         transform_base[:3,:3]               = quaternion_matrix(np.array([servoToPose_msg.servo_to_pose.orientation.x, servoToPose_msg.servo_to_pose.orientation.y, servoToPose_msg.servo_to_pose.orientation.z, servoToPose_msg.servo_to_pose.orientation.w]))[:3, :3]
         transform_base                      = (np.dot(transform_fk, np.linalg.inv(transform_base)))
         print(transform_base, transform_fk_msg)
-        breakpoint()
         qq                                  = tf.transformations.quaternion_from_matrix(transform_base)
         servo_to_pose                       = Pose(position=Point(
                                                         x=transform_base[0,3],
@@ -183,21 +182,15 @@ class CommandServer():
             retract_reply(Bool): Success/Failure reply
         """
         # retrieve current pose from endpoint
-        current_pose = copy.deepcopy(self._limb.endpoint_pose())
-        # Create static pose to return to here
-        ik_pose = Pose()
-        ik_pose.position.x = current_pose['position'].x
-        ik_pose.position.y = current_pose['position'].y
-        ik_pose.position.z = current_pose['position'].z + self._hover_distance
-        ik_pose.orientation.x = current_pose['orientation'].x
-        ik_pose.orientation.y = current_pose['orientation'].y
-        ik_pose.orientation.z = current_pose['orientation'].z
-        ik_pose.orientation.w = current_pose['orientation'].w
-        staticRetract_pose = _servotoPose.servotoPoseRequest(ik_pose)
+        if cmd.retract_cmd:
+            joint_angles = {'right_j0': 0.60579296875, 'right_j1': -0.9182119140625, 'right_j2': -0.5383134765625, 'right_j3': 1.7842587890625, 'right_j4': 0.396298828125, 'right_j5': 0.878787109375, 'right_j6': 3.1722001953125}
+        else:
+            joint_angles = {'right_j0': 0.0510966796875, 'right_j1': -0.9274990234375, 'right_j2': -0.9209423828125, 'right_j3': 1.7007294921875, 'right_j4': 0.4689482421875, 'right_j5': 1.095123046875, 'right_j6': 2.2665107421875}
+
         try:
             # To retract first move the joint to neutral position
             self._limb.move_to_neutral()
-            resp = self._servo_to_pose(staticRetract_pose)
+            resp = self._guarded_move_to_joint_position(joint_angles)
             return _retract.retractResponse(True)
         except Exception as e:
             self._loginfo("RetractNode", e)

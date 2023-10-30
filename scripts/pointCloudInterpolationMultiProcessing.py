@@ -142,20 +142,20 @@ class ptCloudNode():
         SmoothedImage           = cv2.cvtColor(SmoothedImage, cv2.COLOR_BGR2HSV)
         print("Time to update images: ", time.time() - tt)
         
-        SmoothedImage           = cv2.inRange(SmoothedImage, (180,0,0), (255,255,255))
+        SmoothedImage           = cv2.inRange(SmoothedImage, (100,0,0), (255,255,255))
         edges                   = cv2.Canny(SmoothedImage.astype(np.uint8), 70, 100)
         # Finding contours in the smooth edges from HSV space to fit ellipse and find the location of the KET
         contours            = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        if len(contours[0]) == 0:
+            # Add an internal logging thing here
+            rospy.logwarn("Failed to find depth point skipping on publishing") 
+            return 0
+
         for cc in contours[0]:
-            print("Contour Area: ", cv2.contourArea(cc))
             if cv2.contourArea(cc) >= 300 and cv2.contourArea(cc) <= 450: # This condition only holds when the Sawyer arm is 90 cms above the ket
                 ellipse     = cv2.fitEllipse(cc)
                 depthPt     = np.flip(ellipse[0])
-                print(int(depthPt[0]), int(depthPt[1]))
-        
-        if 'depthPt' in locals():
-            pass
-        else:
+        if 'depthPt' not in locals().keys():
             # Add an internal logging thing here
             rospy.logwarn("Failed to find depth point skipping on publishing") 
             return 0

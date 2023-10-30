@@ -334,12 +334,14 @@ class retract : public BT::SyncActionNode{
 
         BT::NodeStatus tick() override{
             // Call service here
+            std::string msg;
             ros::ServiceClient client = this->_nh.serviceClient<pick_and_place::retract>(std::string("RetractCmd"));
-
+            BT::TreeNode::getInput("retractCmd", msg);
             pick_and_place::retract srv_call;
-
-            srv_call.request.retract_cmd = true;
-
+            
+            std::cout << "msg: " << (msg == std::string("True")) << "\n";
+            srv_call.request.retract_cmd = (msg == std::string("True"));
+            
             ros::service::waitForService("RetractCmd", ros::Duration(5));
 
             if (client.call(srv_call)) {
@@ -352,7 +354,7 @@ class retract : public BT::SyncActionNode{
         }
 
         static BT::PortsList providedPorts(){
-            return{};
+            return{InputPort<std::string>("retractCmd")};
         }
 };
 
@@ -483,8 +485,12 @@ static const char* testVisualFeedback = R"(
  <root BTCPP_format="3">
     <BehaviorTree ID="DemoTry">
         <Sequence>
+            <gripperOpen/>
+            <retract retractCmd="True"/>
             <visualFeedback ServoToPose="{ServoToPose}"/>
             <ServoToPose ServoToPose="{ServoToPose}"/>
+            <gripperClose/>
+            <retract retractCmd="False"/>
         </Sequence>
     </BehaviorTree ID="DemoTry">
  </root>
