@@ -20,3 +20,7 @@ catkin build
 
 <img src="PickPose.png" alt="PickPoseDeterminationOutput" width="200"/>
 
+
+# Pick and place with Ket Full run 1
+
+[video](https://photos.app.goo.gl/kcMkWEM2xJDghHP7A)

@@ -12,7 +12,7 @@ from pick_and_place.srv import _gripper, _approach, _servotoPose, _retract
 from tf.transformations import quaternion_slerp, quaternion_matrix
 import tf
 import numpy as np
-import intera_interface 
+import intera_interface
 
 class CommandServer():
     def __init__(self, limb="right", hover_distance = -0.35, tip_name="right_gripper_tip"):
@@ -59,6 +59,7 @@ class CommandServer():
         """
         if cmd.gripper_cmd == 'Open':
             try:
+                rospy.sleep(1.0)
                 self._gripper.open()
                 rospy.sleep(1.0)
                 return _gripper.gripperResponse(True)
@@ -67,6 +68,7 @@ class CommandServer():
                 return _gripper.gripperResponse(False) 
         elif cmd.gripper_cmd == 'Close':
             try:
+                rospy.sleep(1.0)
                 self._gripper.close()
                 rospy.sleep(1.0)
                 return _gripper.gripperResponse(True)
@@ -185,8 +187,10 @@ class CommandServer():
         if cmd.retract_cmd:
             joint_angles = {'right_j0': 0.60579296875, 'right_j1': -0.9182119140625, 'right_j2': -0.5383134765625, 'right_j3': 1.7842587890625, 'right_j4': 0.396298828125, 'right_j5': 0.878787109375, 'right_j6': 3.1722001953125}
         else:
-            joint_angles = {'right_j0': 0.0510966796875, 'right_j1': -0.9274990234375, 'right_j2': -0.9209423828125, 'right_j3': 1.7007294921875, 'right_j4': 0.4689482421875, 'right_j5': 1.095123046875, 'right_j6': 2.2665107421875}
-
+            self._limb.set_joint_position_speed(0.01)
+            # joint_angles = {'right_j0': 0.0510966796875, 'right_j1': -0.9274990234375, 'right_j2': -0.9209423828125, 'right_j3': 1.7007294921875, 'right_j4': 0.4689482421875, 'right_j5': 1.095123046875, 'right_j6': 2.2665107421875}
+            joint_angles = {'right_j0': -0.9504794921875, 'right_j1': -0.54364453125, 'right_j2': 0.526521484375, 'right_j3': 1.85483984375, 'right_j4': -1.121859375, 'right_j5': 0.4543662109375, 'right_j6': 2.106130859375}
+            # joint_angles = {'right_j0': -0.9349599609375, 'right_j1': -0.5297138671875, 'right_j2': 0.52435546875, 'right_j3': 1.8495341796875, 'right_j4': -1.20587109375, 'right_j5': 0.4416484375, 'right_j6': 2.1454580078125}
         try:
             # To retract first move the joint to neutral position
             self._limb.move_to_neutral()
