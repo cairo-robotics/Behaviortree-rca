@@ -136,7 +136,7 @@ class CommandServer():
         transform_fk[:3,:3]                 = quaternion_matrix(np.array([transform_fk_msg.orientation.x, transform_fk_msg.orientation.y, transform_fk_msg.orientation.z, transform_fk_msg.orientation.w]))[:3, :3]
         transform_base[:3, 3]               = np.array([servoToPose_msg.servo_to_pose.position.x,servoToPose_msg.servo_to_pose.position.y,servoToPose_msg.servo_to_pose.position.z])
         transform_base[:3,:3]               = quaternion_matrix(np.array([servoToPose_msg.servo_to_pose.orientation.x, servoToPose_msg.servo_to_pose.orientation.y, servoToPose_msg.servo_to_pose.orientation.z, servoToPose_msg.servo_to_pose.orientation.w]))[:3, :3]
-        transform_base                      = (np.dot(transform_fk, np.linalg.inv(transform_base)))
+        transform_base                      = np.matmul(transform_fk, (transform_base))
         print(transform_base, transform_fk_msg)
         qq                                  = tf.transformations.quaternion_from_matrix(transform_base)
         servo_to_pose                       = Pose(position=Point(

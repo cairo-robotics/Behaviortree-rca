@@ -50,6 +50,7 @@ from scipy.spatial.transform import Rotation as R
 from scipy import stats
 from skimage.transform import hough_ellipse
 from cv_bridge import CvBridge
+
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
 from multiprocessing import freeze_support
@@ -188,29 +189,34 @@ class ptCloudNode():
         for i in self.open3dptCloud.points:
             contourPtCloud.points.append(Point32(i[0], i[1], i[2]))
         
-        
-        for i in self.depthPt.points:
-            print("Found Pt: ", i[0], i[1], i[2])
-            contourPtCloud.points.append(Point32(i[0], i[1], i[2]))            
-        
-        pose_val = PoseStamped()
-        pose_val.header          = header
-        pose_val.pose.position.x = self.depthPt.points[0][0]
-        pose_val.pose.position.y = self.depthPt.points[0][1]
-        pose_val.pose.position.z = self.depthPt.points[0][2] + self.holdDistBottom
-        print("Point :   ", pose_val.pose.position.x, pose_val.pose.position.y, pose_val.pose.position.z )
-        # TODO Fix here
-        q = quaternion_from_euler(0, 0, 0)    
+        if np.asarray(self.depthPt.points).shape[0] != 0:
+            for i in self.depthPt.points:
+                print("Found Pt: ", i[0], i[1], i[2])
+                contourPtCloud.points.append(Point32(i[0], i[1], i[2]))            
             
-        pose_val.pose.orientation.x = q[0]
-        pose_val.pose.orientation.y = q[1]
-        pose_val.pose.orientation.z = q[2]
-        pose_val.pose.orientation.w = q[3]
-        
-        self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
-        self.pickPosePublisher.publish(pose_val)
-        self.pointcloudPublisher.publish(contourPtCloud)        
-        self.rate.sleep()
+            pose_val = PoseStamped()
+            pose_val.header          = header
+            pose_val.pose.position.x = self.depthPt.points[0][0]
+            pose_val.pose.position.y = self.depthPt.points[0][1]
+            pose_val.pose.position.z = self.depthPt.points[0][2] + self.holdDistBottom
+            print("Point :   ", pose_val.pose.position.x, pose_val.pose.position.y, pose_val.pose.position.z)
+            q = quaternion_from_euler(0, 0, 0)
+                
+            pose_val.pose.orientation.x = q[0]
+            pose_val.pose.orientation.y = q[1]
+            pose_val.pose.orientation.z = q[2]
+            pose_val.pose.orientation.w = q[3]
+            
+            self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
+            self.pickPosePublisher.publish(pose_val)
+            self.pointcloudPublisher.publish(contourPtCloud)        
+            self.rate.sleep()
+        else:
+            rospy.logwarn("Failed to find depth point skipping on publishing") 
+            self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
+            self.pointcloudPublisher.publish(contourPtCloud) 
+            self.rate.sleep()
+            
 
     def readPointCloud(self):
         """Initialises node and calls subscriber
