@@ -31,7 +31,7 @@ using namespace BT;
 
 
 /**
- * splitString: Splits string into vector of <x, y, z, q1, q2, q3, q4>
+ * splitString function: Splits string into vector of <x, y, z, q1, q2, q3, q4>
  * 
  * @param input     String recieved from blackboard carrying reference pose.
  * @param delimiter Delimiter for input string.
@@ -52,7 +52,7 @@ std::vector<float> splitString(const std::string input, const char& delimiter) {
 }
 
 /**
- * createMsg: Creates a ros pose message from the vector of 7 elements
+ * createMsg function: Creates a ros pose message from the vector of 7 elements
  * 
  * @param msg       Pointer to ros message that holds values from the vector.
  * @param poseVal   Vector obtained from convering Blackboard string to vector.
@@ -70,7 +70,7 @@ void createMsg (geometry_msgs::Pose* msg, const std::vector<float> poseVal){
 }
 
 /**
- * Creates a string from a Ros pose message to be stored in blackboard
+ * createString function: Creates a string from a Ros pose message to be stored in blackboard
  * 
  * @param msg       ROS pose message to be written to blackboard
  * @param delimiter Delimiter string for the blackboard string
@@ -90,7 +90,7 @@ std::string createString(geometry_msgs::Pose* msg, std::string delimiter){
 }
 
 /**
- * Creates a pose from a json file stored on the filesystem.
+ * poseFromJSON function: Creates a pose from a json file stored on the filesystem.
  * 
  * @param fileName  FileName to be read, ends with .json.
  * @return tf::Transform type object that has static transform.
@@ -118,7 +118,7 @@ tf::Transform poseFromJSON(std::string fileName){
 }
 
 /**
- *  GripperOpen class that inherits the Behaviortree.CPP Synchronous Action Node class,
+ *  GripperOpen class: inherits the Behaviortree.CPP Synchronous Action Node class,
  *  and creates an Action node to open the sawyer gripper
  */
 
@@ -131,7 +131,7 @@ class gripperOpen : public BT::SyncActionNode{
         : BT::SyncActionNode(name, config), _nh(nh){}
 
         /**
-         * GripperOpen class: Tick function that overrides a virtual function to call a service that opens the gripper.
+         * GripperOpen tick function: Tick function that overrides a virtual function to call a service that opens the gripper.
          * 
          * @return Node status boolean for the Behaviortree.CPP node
          */
@@ -157,7 +157,7 @@ class gripperOpen : public BT::SyncActionNode{
 };
 
 /**
- *  GripperClose class that inherits the Behaviortree.CPP Synchronous Action Node class,
+ *  GripperClose class: inherits the Behaviortree.CPP Synchronous Action Node class,
  *  and creates an Action node to close the sawyer gripper
  */
 
@@ -169,13 +169,14 @@ class gripperClose : public BT::SyncActionNode{
         : BT::SyncActionNode(name, config), _nh(nh){}
 
         /**
-         * GripperClose class: Tick function that overrides a virtual function to call a ros-service that closes the gripper.
+         * GripperClose tick function: Tick function that overrides a virtual function to call a ros-service that closes the gripper.
          * 
          * @return Node status boolean for the Behaviortree.CPP node
          */
 
         BT::NodeStatus tick() override{
-            // Client code to open the gripper and recieve a response
+
+            //Client code to open the gripper and recieve a response
             ros::ServiceClient client = this->_nh.serviceClient<pick_and_place::gripper>(std::string("GripperCmd"));
             pick_and_place::gripper srv_call;
             srv_call.request.gripper_cmd = std::string("Close");
@@ -194,7 +195,7 @@ class gripperClose : public BT::SyncActionNode{
 };
 
 /**
- *  Approach class that inherits the Behaviortree.CPP Synchronous Action Node class,
+ *  Approach class: inherits the Behaviortree.CPP Synchronous Action Node class,
  *  and creates an Action node to approach the Ket or to approach the hole in which Ket needs to be placed.
  */
 
@@ -208,7 +209,7 @@ class approach : public BT::SyncActionNode{
         : BT::SyncActionNode(name, config), _nh(nh){}
 
         /**
-         * Approach class: Tick function that overrides a virtual function to call a ros-service
+         * Approach tick function: Tick function that overrides a virtual function to call a ros-service
          * that servos to a prestored pose in blackboard named as "approachPose".
          * 
          * @return Node status boolean for the Behaviortree.CPP node
@@ -216,7 +217,10 @@ class approach : public BT::SyncActionNode{
          */
 
         BT::NodeStatus tick() override{
-            // Initialise service
+            /**
+             * @brief Initialise service
+             * 
+             */
             ros::ServiceClient client = this->_nh.serviceClient<pick_and_place::approach>(std::string("ApproachCmd"));
 
             std::string msg;
@@ -250,7 +254,7 @@ class approach : public BT::SyncActionNode{
 };
 
 /**
- *  ServoToPose class that inherits the Behaviortree.CPP Synchronous Action Node class,
+ *  ServoToPose class: inherits the Behaviortree.CPP Synchronous Action Node class,
  *  and creates an Action node. To be called to move the arm around freely to another pose. 
  *  Does not hold any precondition, of any sort of pose extraction.
  */
@@ -264,7 +268,7 @@ class ServoToPose : public BT::SyncActionNode{
         : BT::SyncActionNode(name, config), _nh(nh){}
 
         /**
-         * ServoToPose class: Tick function that overrides a virtual function to call a ros-service
+         * ServoToPose tick function: Tick function that overrides a virtual function to call a ros-service
          * that servos to a prestored pose in blackboard named as "ServoToPose".
          * 
          * @return Node status boolean for the Behaviortree.CPP node
@@ -310,7 +314,7 @@ class ServoToPose : public BT::SyncActionNode{
 
 
 /**
- *  Retract class that inherits the Behaviortree.CPP Synchronous Action Node class,
+ *  Retract class: inherits the Behaviortree.CPP Synchronous Action Node class,
  *  and creates an Action node to approach one of the two preprogrammed positions to head to after picking up the ket.
  *  To be called after holding the ket and retracting to a pre-defined position and retracting after placing the ket in the hole.
  */
@@ -325,7 +329,7 @@ class retract : public BT::SyncActionNode{
         : BT::SyncActionNode(name, config), _nh(nh){}
 
         /**
-         * Retract class: Tick function that overrides a virtual function to call a ros-service
+         * Retract tick function: Tick function that overrides a virtual function to call a ros-service
          * that servos to a prestored pose 
          * 
          * @return Node status boolean for the Behaviortree.CPP node
@@ -359,7 +363,7 @@ class retract : public BT::SyncActionNode{
 };
 
 /**
- *  VisualFeedback class that inherits the Behaviortree.CPP Synchronous Action Node class,
+ *  VisualFeedback class: inherits the Behaviortree.CPP Synchronous Action Node class,
  *  and creates an Action node to read the topic of DL node to detect where to place the Ket, 
  *  also writes it to the blackboard to servo to eventually.
  */
@@ -382,7 +386,7 @@ class visualFeedback : public BT::SyncActionNode{
         }
 
         /**
-         * VisualFeedback class: Tick function spins the node once to collect pose from
+         * VisualFeedback tick function: Tick function spins the node once to collect pose from
          * the deeplearning node that detects the location at which the ket is to be placed.
          * 
          * @return Node status boolean for the Behaviortree.CPP node
