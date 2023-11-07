@@ -1,6 +1,3 @@
-'''
-file:///home/dt/Downloads/sensors-19-02837.pdf
-'''
 import copy
 import rospy
 from geometry_msgs.msg import (
@@ -33,7 +30,8 @@ class CommandServer():
         self._rs.enable()
 
     def _guarded_move_to_joint_position(self, joint_angles, timeout=5.0):
-        """Moves the arm to the given joint angles
+        """
+        _guarded_move_to_joint_position: Moves the arm to the given joint angles
 
         Args:
             joint_angles (_type_): _description_ #TODO: Fill the datatype
@@ -52,7 +50,8 @@ class CommandServer():
         return "success"
 
     def gripper_srv(self, cmd):
-        """Gripper command callback for the gripper_cmd service
+        """
+        gripper_srv: Gripper command callback for the gripper_cmd service
 
         Args:
             cmd (string): Command to open or close the gripper
@@ -84,7 +83,8 @@ class CommandServer():
         
 
     def _approach(self, pose):
-        """Slows down the arm and moves to the desired joint angle positions
+        """
+        _approach: Slows down the arm and moves to the desired joint angle positions
 
         Args:
             pose (rosmsg pose): Desired pose where arm has to reach
@@ -126,7 +126,8 @@ class CommandServer():
         return _approach.approachResponse(True)
 
     def _servo_to_pose(self, servoToPose_msg, timeout=7.0):
-        """A Cartesian move
+        """
+        _servo_to_pose: A Cartesian move
 
         Args:
             servoToPose_msg (rosmsg Pose): Pose to servo to in gripper's coordinate frame
@@ -176,7 +177,8 @@ class CommandServer():
         return _servotoPose.servotoPoseResponse(True) 
 
     def _retract(self, cmd):
-        """Move to pose at a hoverdistance
+        """
+        _retract: Move to pose at a hoverdistance
 
         Args:
             cmd (Bool): Choose one of the two positions to be retracted to
