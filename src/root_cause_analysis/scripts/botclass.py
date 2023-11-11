@@ -49,7 +49,16 @@ class Bot(ABC):
         
         self.ServerFunctions_dict = dict(zip(ServerComments_keys, ServerComments_vals))
         
-    def create_
+    def create_message(self):
+        """Creates a message by taking roslogs, from server, errors from execution, 
+        and function comments explaining how the code works to the LLM.
+        This is version 1 of this function later it will take these, output from GPT 
+        and generate a prompt from a smaller LLMs using the previously mentioned 
+        """
+        
+        self.message = ""
+        
+        pass
     
     def call_gpt(self) -> str:
         chat = openai.ChatCompletion.create(
