@@ -27,6 +27,7 @@ catkin build
 
 # Test GPT3.5 run
 
-Test GPT3.5 run on the website since GPT4 subscription cannot be taken yet.
-
 [TestRun](https://chat.openai.com/share/d55a9086-3624-4caa-a764-1f8768433b6d)
+
+Test run locally using chatbot made using Langchain and OpenAI gpt-3.5-turbo can be found in
+```src/root_cause_analysis/scripts/experiment1.txt```

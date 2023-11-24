@@ -4,14 +4,23 @@ from abc import ABC
 from comment_parser import comment_parser
 import docstring_parser
 
+from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationChain
+
 
 class Bot(ABC):
     def __init__(self) -> None:
         super().__init__()
-        self.API_KEY        =  os.environ['OPEN_AI_API_KEY']
-        self.docstringParser=  docstring_parser.google.GoogleParser()
+        self.API_KEY            =  os.environ['OPEN_AI_API_KEY']
+        self.docstringParser    =  docstring_parser.google.GoogleParser()
+        self.memory             =  ConversationBufferMemory()
+        self.llm                =  ChatOpenAI(model='gpt-3.5-turbo')
+        self.conversation       =  ConversationChain(
+                                        llm=self.llm,
+                                        memory=self.memory
+                                        )
         
     def extract_docstrings_from_file(self, file_path):
         with open(file_path, 'r') as file:
@@ -78,38 +87,32 @@ class Bot(ABC):
 
 
     def chatbot_prompt(self):
-        self.message = "Given this information, you're now given a human user who has observed the entire experiment happen, by taking inputs from the user you have to perform a root cause analysis on the behaviortree and suggest changes in a final report. You can ask the user questions in one by one manner, you can start by asking how did the experiment go, followed by subsequent questions that you think will be helpful for debugging the system."        
+        self.message += "\nGiven this information, you're now given a human user who has observed the entire experiment happen, by taking inputs from the user you have to perform a root cause analysis on the behaviortree and suggest changes in a final report. You can ask the user questions in one by one manner, you can start by asking how did the experiment go, followed by subsequent questions that you think will be helpful for debugging the system."        
     
     def bot_loop(self):
         self.message = ""
         
         self.init_message()
         
-        # Reply after conditioning GPT with the code description
-        reply = self.call_gpt()
         
         self.chatbot_prompt()
-        
         # Reply after conditioning GPT to be a chat agent
-        reply = self.call_gpt()
+        reply = self.conversation.predict(input=self.message)
         print(reply)
         
         while True:
             self.message = ""
             self.message = input("Enter Your Response: ")
-            reply = self.call_gpt()
+            reply = self.conversation.predict(input=self.message)
             print(reply)
         
-    
-    def call_gpt(self) -> str:
-        chat = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo", messages=self.message
-        )
-        reply = chat.choices[0].message.content
-        return reply
+
 
 def test():
     tt = Bot()
     tt.create_data("../../pick_and_place/src/BTClient.cpp", "../../pick_and_place/scripts/BTNodeServer.py", "../../pick_and_place/src/temp.xml")
-    tt.init_message()
-    print(tt.message)
+    # tt.init_message()
+    # print(tt.message)
+    tt.bot_loop()
+    
+test()
