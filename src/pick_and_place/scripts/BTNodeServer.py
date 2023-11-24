@@ -142,7 +142,7 @@ class CommandServer():
         transform_fk[:3,:3]                 = quaternion_matrix(np.array([transform_fk_msg.orientation.x, transform_fk_msg.orientation.y, transform_fk_msg.orientation.z, transform_fk_msg.orientation.w]))[:3, :3]
         transform_base[:3, 3]               = np.array([servoToPose_msg.servo_to_pose.position.x,servoToPose_msg.servo_to_pose.position.y,servoToPose_msg.servo_to_pose.position.z])
         transform_base[:3,:3]               = quaternion_matrix(np.array([servoToPose_msg.servo_to_pose.orientation.x, servoToPose_msg.servo_to_pose.orientation.y, servoToPose_msg.servo_to_pose.orientation.z, servoToPose_msg.servo_to_pose.orientation.w]))[:3, :3]
-        transform_base                      = np.matmul(transform_fk, (transform_base))
+        transform_base                      = np.matmul(transform_fk, np.linalg.inv(transform_base))
         print(transform_base, transform_fk_msg)
         qq                                  = tf.transformations.quaternion_from_matrix(transform_base)
         servo_to_pose                       = Pose(position=Point(
@@ -194,7 +194,7 @@ class CommandServer():
         else:
             self._limb.set_joint_position_speed(0.01)
             # joint_angles = {'right_j0': 0.0510966796875, 'right_j1': -0.9274990234375, 'right_j2': -0.9209423828125, 'right_j3': 1.7007294921875, 'right_j4': 0.4689482421875, 'right_j5': 1.095123046875, 'right_j6': 2.2665107421875}
-            joint_angles = {'right_j0': -0.9504794921875, 'right_j1': -0.54364453125, 'right_j2': 0.526521484375, 'right_j3': 1.85483984375, 'right_j4': -1.121859375, 'right_j5': 0.4543662109375, 'right_j6': 2.106130859375}
+            joint_angles = {'right_j0': 0.1605078125, 'right_j1': 0.5452626953125, 'right_j2': -1.2906455078125, 'right_j3': 1.2680205078125, 'right_j4': -1.04688671875, 'right_j5': -1.1503220703125, 'right_j6': 3.5907509765625}
             # joint_angles = {'right_j0': -0.9349599609375, 'right_j1': -0.5297138671875, 'right_j2': 0.52435546875, 'right_j3': 1.8495341796875, 'right_j4': -1.20587109375, 'right_j5': 0.4416484375, 'right_j6': 2.1454580078125}
         try:
             # To retract first move the joint to neutral position

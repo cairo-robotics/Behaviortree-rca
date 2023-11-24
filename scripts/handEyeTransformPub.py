@@ -21,24 +21,24 @@ def inverseTransformSave(fileName):
     with open(fileName, 'w') as f:
         json.dump(data, fp = f)
 
-inverseTransformSave("GripperToCameraTransform.json")
+# inverseTransformSave("GripperToCameraTransform.json")
 
-# rospy.init_node('hand_eye_calib_transform')
+rospy.init_node('hand_eye_calib_transform')
 
-# listener = tf.TransformListener()
+listener = tf.TransformListener()
 
-# rate = rospy.Rate(1000.0)
-# while not rospy.is_shutdown():
-#     try:        
-#         (trans, rot)                    = readJsonTransfrom("/home/dt/HRIPapers/hand_eye_ws/hand_eye_calibration/good_results/calibration.json")
-#         br = tf.TransformBroadcaster()
-#         br.sendTransform((trans[0], trans[1], trans[2]),
-#                          rot,
-#                          rospy.Time.now(),
-#                          "camera_link",
-#                          "right_gripper_tip")
-#         print(trans, rot)
-#     except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-#         pass
+rate = rospy.Rate(1000.0)
+while not rospy.is_shutdown():
+    try:        
+        (trans, rot)                    = readJsonTransfrom("/home/dt/HRIPapers/hand_eye_ws/hand_eye_calibration/good_results/calibration.json")
+        br = tf.TransformBroadcaster()
+        br.sendTransform((trans[0], trans[1], trans[2]),
+                         rot,
+                         rospy.Time.now(),
+                         "right_gripper_r_finger_tip",
+                         "camera_color_optical_frame")
+        print(trans, rot)
+    except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+        pass
     
-# rospy.spin()
+rospy.spin()

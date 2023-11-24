@@ -408,7 +408,7 @@ class visualFeedback : public BT::SyncActionNode{
                 tf::Transform c_T_K, g_T_c;
                 tf::poseMsgToTF(this->_desiredPosition.pose, c_T_K);
                 g_T_c = poseFromJSON("src/pick_and_place/src/GripperToCameraTransform.json");
-                tf::Transform finalGoal = (tf::Transform(c_T_K.inverse()*g_T_c));
+                tf::Transform finalGoal = (tf::Transform(g_T_c.inverse()*c_T_K));
                 geometry_msgs::Pose finalGoalPose;
                 tf::poseTFToMsg(finalGoal, finalGoalPose);
 

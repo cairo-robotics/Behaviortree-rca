@@ -4,6 +4,10 @@ from abc import ABC
 from comment_parser import comment_parser
 import docstring_parser
 
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import StrOutputParser
+
 class Bot(ABC):
     def __init__(self) -> None:
         super().__init__()
@@ -49,16 +53,38 @@ class Bot(ABC):
         
         self.ServerFunctions_dict = dict(zip(ServerComments_keys, ServerComments_vals))
         
-    def create_message(self):
+    def create_message(self, base_msg = ""):
         """Creates a message by taking roslogs, from server, errors from execution, 
         and function comments explaining how the code works to the LLM.
         This is version 1 of this function later it will take these, output from GPT 
         and generate a prompt from a smaller LLMs using the previously mentioned 
         """
         
-        self.message = ""
+        if len(base_msg == 0):
+            self.message = self.it_message()
+        else:
+            self.message = base_msg
+
+        with open(self.BTxml, 'r') as file:
+            BTxml = file.read()
+            
+        serverCode = ""
+        
+        clientCode = ""
+        
+        self.message += f"The server side code's function description can be given as: \n {serverCode} \n \n The Client side code function descriptions can be given as: \n {clientCode} \n \n \
+            The behavior tree responsible for execution of these functions is given as: {BTxml}"
         
         pass
+    
+    def init_message(self):
+        return "You're an AI helper assigned with the job of debugging an autonomous pick and place system developed using BehaviorTree.CPP. \
+            To briefly describe the enviornment, we have a assembly board in which the specific things are to be placed and, \
+            we have a mat which has locations where the individual parts are placed initially. Our robot arm(Sawyer) picks the ket from the mat and \
+            places that in a hole in the assembly board. Our robot arm is equipped with a gripper that picks the ket,\
+            and an RGBD camera that calculates the pick position of the ket. The software can be broken down into server and client.\
+            Server is responsible for the code that interacts with the robot hardware using intera API that the OEM provides.\
+            Client software as mentioned before is built using BehaviorTree.CPP, the job of this is to organise low level functionalities into a heirarchichal system that is well abstracted and individual processes are isolated from each other."
     
     def call_gpt(self) -> str:
         chat = openai.ChatCompletion.create(
