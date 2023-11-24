@@ -268,8 +268,7 @@ class ServoToPose : public BT::SyncActionNode{
         : BT::SyncActionNode(name, config), _nh(nh){}
 
         /**
-         * ServoToPose tick function: Tick function that overrides a virtual function to call a ros-service
-         * that servos to a prestored pose in blackboard named as "ServoToPose".
+         * ServoToPose tick function: Tick function that overrides a virtual function to call a ros-service that servos to a prestored pose in blackboard named as "ServoToPose".
          * 
          * @return Node status boolean for the Behaviortree.CPP node
          * @throw  Throws Runtime error if blackboard value is empty
