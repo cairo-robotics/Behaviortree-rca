@@ -1,0 +1,14 @@
+ <root BTCPP_format="3">
+    <BehaviorTree ID="DemoTry">
+        <Sequence>
+            <gripperOpen/>
+            <retract retractCmd="True"/>
+            <visualFeedback ServoToPose="{ServoToPose}"/>
+            <ServoToPose ServoToPose="{ServoToPose}"/>
+            <gripperClose/>
+            <retract retractCmd="False"/>
+            <gripperOpen/>
+        </Sequence>
+    </BehaviorTree ID="DemoTry">
+ </root>
+

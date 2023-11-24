@@ -6,7 +6,6 @@ import docstring_parser
 
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
-from langchain.schema import StrOutputParser
 
 class Bot(ABC):
     def __init__(self) -> None:
@@ -30,7 +29,7 @@ class Bot(ABC):
     
         return keys, vals
    
-    def create_data(self, ClientLoc: str, ServerLoc: str) -> None:
+    def create_data(self, ClientLoc: str, ServerLoc: str, BehaviorTreeLoc: str) -> None:
         """Creates a dictionary for client, server code comments/description for different functions and classes,
         to be used later for prompt generation
 
@@ -53,6 +52,9 @@ class Bot(ABC):
         
         self.ServerFunctions_dict = dict(zip(ServerComments_keys, ServerComments_vals))
         
+        with open(BehaviorTreeLoc, 'r') as file:
+            self.BTxml = file.read()
+        
     def create_message(self, base_msg = ""):
         """Creates a message by taking roslogs, from server, errors from execution, 
         and function comments explaining how the code works to the LLM.
@@ -60,22 +62,17 @@ class Bot(ABC):
         and generate a prompt from a smaller LLMs using the previously mentioned 
         """
         
-        if len(base_msg == 0):
-            self.message = self.it_message()
+        if len(base_msg) == 0:
+            self.message = self.init_message()
         else:
             self.message = base_msg
-
-        with open(self.BTxml, 'r') as file:
-            BTxml = file.read()
             
-        serverCode = ""
+        serverCode = "".join([self.ServerFunctions_dict[t].short_description + " " for t in self.ServerFunctions_dict])
         
-        clientCode = ""
+        clientCode = "".join([(t + ": " + self.ClientTicks_dict[t] + " \n") for t in self.ClientTicks_dict])
         
-        self.message += f"The server side code's function description can be given as: \n {serverCode} \n \n The Client side code function descriptions can be given as: \n {clientCode} \n \n \
-            The behavior tree responsible for execution of these functions is given as: {BTxml}"
+        self.message += f"The server side code's function description can be given as: \n {serverCode} \n \n The Client side code function descriptions can be given as: \n {clientCode} \n \n The behavior tree responsible for execution of these functions is given as: {self.BTxml}"
         
-        pass
     
     def init_message(self):
         return "You're an AI helper assigned with the job of debugging an autonomous pick and place system developed using BehaviorTree.CPP. \
@@ -91,3 +88,7 @@ class Bot(ABC):
             model="gpt-3.5-turbo", messages=self.messages
         )
         reply = chat.choices[0].message.content
+def test():
+    tt = Bot()
+    tt.create_data("../../pick_and_place/src/BTClient.cpp", "../../pick_and_place/scripts/BTNodeServer.py", "../../pick_and_place/src/temp.xml")
+    tt.create_message()
