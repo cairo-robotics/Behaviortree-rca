@@ -88,6 +88,7 @@ class Bot(ABC):
             model="gpt-3.5-turbo", messages=self.messages
         )
         reply = chat.choices[0].message.content
+
 def test():
     tt = Bot()
     tt.create_data("../../pick_and_place/src/BTClient.cpp", "../../pick_and_place/scripts/BTNodeServer.py", "../../pick_and_place/src/temp.xml")
