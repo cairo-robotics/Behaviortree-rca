@@ -1,4 +1,5 @@
 import openai, os, re
+from colorama import Fore, Style
 import copy
 from abc import ABC
 from comment_parser import comment_parser
@@ -104,15 +105,13 @@ class Bot(ABC):
             self.message = ""
             self.message = input("Enter Your Response: ")
             reply = self.conversation.predict(input=self.message)
-            print(reply)
+            print(Fore.GREEN + reply + Style.RESET_ALL)
         
 
 
 def test():
     tt = Bot()
     tt.create_data("../../pick_and_place/src/BTClient.cpp", "../../pick_and_place/scripts/BTNodeServer.py", "../../pick_and_place/src/temp.xml")
-    # tt.init_message()
-    # print(tt.message)
     tt.bot_loop()
     
 test()
