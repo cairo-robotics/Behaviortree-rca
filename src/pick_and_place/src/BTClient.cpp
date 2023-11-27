@@ -143,10 +143,10 @@ class gripperOpen : public BT::SyncActionNode{
             srv_call.request.gripper_cmd = std::string("Open");
             ros::service::waitForService("GripperCmd", ros::Duration(5));
             if (client.call(srv_call)) {
-                ROS_INFO("Server call successful! Response was %d", srv_call.response.gripper_reply);
+                ROS_INFO("[GripperOpenNode] Gripper Open node Server call successful! Response was %d", srv_call.response.gripper_reply);
                 return BT::NodeStatus::SUCCESS;
             } else {
-                ROS_ERROR("Failed to call 'checks' service");
+                ROS_ERROR("[GripperOpenNode] Gripper Open node failed, check server logs for specifics");
                 return BT::NodeStatus::FAILURE;
             }
         }
@@ -182,10 +182,10 @@ class gripperClose : public BT::SyncActionNode{
             srv_call.request.gripper_cmd = std::string("Close");
             ros::service::waitForService("GripperCmd", ros::Duration(5));
             if (client.call(srv_call)) {
-                ROS_INFO("Server call successful! Response was %d", srv_call.response.gripper_reply);
+                ROS_INFO("[GripperCloseNode] Gripper Close node Server call successful! Response was %d", srv_call.response.gripper_reply);
                 return BT::NodeStatus::SUCCESS;
             } else {
-                ROS_ERROR("Failed to call 'checks' service");
+                ROS_ERROR("[GripperCloseNode] Gripper Close node failed, check server logs for specifics");
                 return BT::NodeStatus::FAILURE;
             }
         }
@@ -240,10 +240,10 @@ class approach : public BT::SyncActionNode{
             ros::service::waitForService("ApproachCmd", ros::Duration(5));
 
             if (client.call(srv_call)) {
-                ROS_INFO("Server call successful! Response was %d", srv_call.response.approach_reply);
+                ROS_INFO("[ApproachNode] Approach node Server call successful! Response was %d", srv_call.response.approach_reply);
                 return BT::NodeStatus::SUCCESS;
             } else {
-                ROS_ERROR("Failed to call 'checks' service");
+                ROS_ERROR("[ApproachNode] Approach node failed check server logs for more information");
                 return BT::NodeStatus::FAILURE;
             }
         }
@@ -298,10 +298,10 @@ class ServoToPose : public BT::SyncActionNode{
             ros::service::waitForService("ServoToPoseCmd", ros::Duration(5));
 
             if (client.call(srv_call)) {
-                ROS_INFO("Server call successful! Response was %d", srv_call.response.servotopose_reply);
+                ROS_INFO("[ServoToPoseNode] Server call successful! Response was %d", srv_call.response.servotopose_reply);
                 return BT::NodeStatus::SUCCESS;
             } else {
-                ROS_ERROR("Failed to call 'checks' service");
+                ROS_ERROR("[ServoToPoseNode] Servo To pose node failed check server logs for more information");
                 return BT::NodeStatus::FAILURE;
             }
         }
@@ -348,10 +348,10 @@ class retract : public BT::SyncActionNode{
             ros::service::waitForService("RetractCmd", ros::Duration(5));
 
             if (client.call(srv_call)) {
-                ROS_INFO("Server call successful! Response was %d", srv_call.response.retract_reply);
+                ROS_INFO("[RetractNode] Retract node success.");
                 return BT::NodeStatus::SUCCESS;
             } else {
-                ROS_ERROR("Failed to call 'checks' service");
+                ROS_INFO("[RetractNode] Retract node failed check server logs for more information");
                 return BT::NodeStatus::FAILURE;
             }
         }
@@ -414,7 +414,7 @@ class visualFeedback : public BT::SyncActionNode{
                 // Write variable to the blackboard
                 std::string poseString = createString(&finalGoalPose, std::string(";"));
                 BT::TreeNode::setOutput(std::string("ServoToPose"), poseString);
-                ROS_INFO("[VisualFeedbackNode] Executed Successfully ");
+                ROS_INFO("[VisualFeedbackNode] Executed Successfully, set the reference pose to the value as calculated by the vision system");
                 return BT::NodeStatus::SUCCESS;
             }
             else{
