@@ -1,5 +1,8 @@
 import openai, os, re
+import pandas as pd
 from colorama import Fore, Style
+from sklearn.model_selection import train_test_split
+
 import copy
 from abc import ABC
 from comment_parser import comment_parser
@@ -88,13 +91,17 @@ class Bot(ABC):
 
 
     def chatbot_prompt(self):
-        self.message += "\nGiven this information, you're now given a human user who has observed the entire experiment happen, by taking inputs from the user you have to perform a root cause analysis on the behaviortree and suggest changes in a final report. You can ask the user questions in one by one manner, you can start by asking how did the experiment go, followed by subsequent questions that you think will be helpful for debugging the system."        
+        self.message += "\nGiven this information, you're now given a human user who has observed the entire experiment happen, by taking inputs from the user you have to perform a root cause analysis on the behaviortree and suggest changes in a final report. You can ask the user questions in one by one manner, you can start by asking how did the experiment go, followed by subsequent questions that you think will be helpful for debugging the system."      
+        
+    def cluster_prompt(self, message):
+        embedding =  openai.Embedding.create(input=message, engine="text-similarity-davinci-001")
+        name      =  self.clf.predict(embedding)
+        return name
     
     def bot_loop(self):
         self.message = ""
         
         self.init_message()
-        
         
         self.chatbot_prompt()
         # Reply after conditioning GPT to be a chat agent
@@ -106,7 +113,23 @@ class Bot(ABC):
             self.message = input("Enter Your Response: ")
             reply = self.conversation.predict(input=self.message)
             print(Fore.GREEN + reply + Style.RESET_ALL)
+
+
+class trainClassifier():
+    def __init__(self) -> None:
+        self.dataframe = None
+        self.test_size = 0.2
+        self.random_state = 42
+        self.classifier = None
+    
+    def loadData(self, path : str) -> None:
+        self.dataframe = pd.read_csv(path)
+        X_train, X_test, y_train, y_test    =   train_test_split(list(self.dataframe.babbage_similarity.values), self.dataframe.Score, test_size=self.test_size, random_state=self.random_state)
+        self.classifier.fit(X_train, y_train)
+
+    def createData(self, path : str) -> None:
         
+        pass
 
 
 def test():

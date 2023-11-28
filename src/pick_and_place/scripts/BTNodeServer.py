@@ -40,10 +40,12 @@ class CommandServer():
         Returns:
             string: status of servoing to the goal
         """
+        self._loginfo("[GuardedMoveToJointPositionServer]", "Started Executing guarded move to joint position, timeout = 5.0")
         if rospy.is_shutdown():
             return
         if joint_angles:
             self._limb.move_to_joint_positions(joint_angles,timeout=timeout)
+            self._loginfo("[GuardedMoveToJointPositionServer]", "Successfully executed guarded move to joint position")
         else:
             rospy.logerr("No Joint Angles provided for move_to_joint_positions. Staying put.")
             return "error"
@@ -59,26 +61,29 @@ class CommandServer():
         Returns:
             gripper_reply (boolean): Success/Failure reply
         """
+        self._loginfo(f"[GripperServiceServer]", f"Started Executing Gripper {cmd}")
         if cmd.gripper_cmd == 'Open':
             try:
                 rospy.sleep(1.0)
                 self._gripper.open()
                 rospy.sleep(1.0)
+                self._loginfo(f"[GripperServiceServer]", f"Successfully executed gripper {cmd} command")
                 return _gripper.gripperResponse(True)
             except Exception as e:
-                self._loginfo("GripperNode", e)
+                self._loginfo(f"[GripperServiceServer]", e)
                 return _gripper.gripperResponse(False) 
         elif cmd.gripper_cmd == 'Close':
             try:
                 rospy.sleep(1.0)
                 self._gripper.close()
                 rospy.sleep(1.0)
+                self._loginfo(f"[GripperServiceServer]", f"Successfully executed gripper {cmd} command")
                 return _gripper.gripperResponse(True)
             except Exception as e:
-                self._loginfo("GripperNode", e)
+                self._loginfo(f"[GripperServiceServer]", e)
                 return _gripper.gripperResponse(False)
         else: 
-            self._loginfo("GripperNode", "Invalid Command From Client: " + cmd.gripper_cmd)
+            self._loginfo(f"[GripperServiceServer]", "Invalid Command From Client: " + cmd.gripper_cmd)
             return _gripper.gripperResponse(False)
         
 
@@ -95,32 +100,36 @@ class CommandServer():
         approach = copy.deepcopy(pose.approach_pose)
         # approach with a pose the hover-distance above the requested pose
         approach.position.z = approach.position.z + self._hover_distance
-        print("approach pose: ", approach)
+        self._loginfo(f"[ApproachServiceServer]", f"Slows down the arm and moves to the desired joint angle positions")
         try:
+            self._loginfo(f"[ApproachServiceServer]", f"Calculating joint angles using inbuilt ik service for pose: {pose}")
             joint_angles = self._limb.ik_request(approach, self._tip_name)
         except Exception as e:
-            self._loginfo("ApproachNode", e)
+            self._loginfo(f"[ApproachServiceServer]", e)
             return _approach.approachResponse(False)
         
         print("Approach joint_angles: ", joint_angles)
         try:
             self._limb.set_joint_position_speed(0.1)
+            self._loginfo(f"[ApproachServiceServer]", f"Slowed down the joint speed to: 0.1")
         except Exception as e:
-            self._loginfo("ApproachNode", e)
+            self._loginfo(f"[ApproachServiceServer]", e)
             return _approach.approachResponse(False)
         try:
+            self._loginfo(f"[ApproachServiceServer]", f"Calling guardedMoveToJointPosition")
             respValue = self._guarded_move_to_joint_position(joint_angles)
             if respValue == 'error':
-                self._loginfo("ApproachNode failed as invalid pose to servo", approach.__str__())
+                self._loginfo(f"[ApproachServiceServer] failed as invalid pose to servo", approach.__str__())
                 return _approach.approachResponse(False)
 
         except Exception as e:
-            self._loginfo("ApproachNode", e)
+            self._loginfo(f"[ApproachServiceServer]", e)
             return _approach.approachResponse(False)
         try:
             self._limb.set_joint_position_speed(0.1)
+            self._loginfo(f"[ApproachServiceServer]", f"Slowed down the joint speed to: 0.1")
         except Exception as e:
-            self._loginfo("ApproachNode", e)
+            self._loginfo(f"[ApproachServiceServer]", e)
             return _approach.approachResponse(False)
 
         return _approach.approachResponse(True)
@@ -135,7 +144,7 @@ class CommandServer():
         Returns:
             servotopose_reply: Success/Failure reply
         """
-        
+        self._loginfo(f"[ServoToPoseServiceServer]", f"Calculating desired pose in base frame of sawyer")
         transform_base, transform_fk        = tf.transformations.identity_matrix(), tf.transformations.identity_matrix()
         transform_fk_msg                    = (self._limb.fk_request(self._limb.joint_angles())).pose_stamp[0].pose
         transform_fk[:3, 3]                 = np.array([transform_fk_msg.position.x, transform_fk_msg.position.y,transform_fk_msg.position.z])
@@ -158,6 +167,7 @@ class CommandServer():
                                                     ))
         
         try:
+            self._loginfo(f"[ServoToPoseServiceServer]", f"Calling ik service to ")
             joint_angles = self._limb.ik_request(servo_to_pose, self._tip_name)
         except Exception as e:
             self._loginfo("ServoToPoseNode", e)
