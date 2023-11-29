@@ -1,3 +1,5 @@
+#https://medium.com/@reddyyashu20/gpt-3-embeddings-perform-text-similarity-semantic-search-classification-and-clustering-part-4-abbcf447faf8
+
 import openai, os, re
 import pandas as pd
 from colorama import Fore, Style
