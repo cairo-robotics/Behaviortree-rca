@@ -10,6 +10,8 @@ import copy
 from abc import ABC
 from comment_parser import comment_parser
 import docstring_parser
+from bs4 import BeautifulSoup
+
 
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
@@ -139,6 +141,11 @@ class trainClassifier():
         self.clustering_model.fit(self.dataframe.davinci_similarity.values)
         self.mapping = dict(list(set([(self.clustering_model.labels_[i], self.dataframe.Label.value[i]) for i in range(len(self.clustering_model.labels_))])))
 
+    def isolate_description(self, response : str) -> list:
+        soup = BeautifulSoup(response, 'html.parser')
+        li_texts = [li.text for li in soup.find_all('li')]
+        return li_texts[1:] # Indexing from 1 since first member of list also contains description specific word, print response and li_texts for detailed understanding.
+    
     def createData(self, xmlPath : str) -> None:
         count = 5
         self.nodes = self.loadNodes(xmlPath)
