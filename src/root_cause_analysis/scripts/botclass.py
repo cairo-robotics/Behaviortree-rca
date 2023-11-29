@@ -5,6 +5,8 @@ import pandas as pd
 from colorama import Fore, Style
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
+from queue import Queue
+from lxml import etree
 import numpy as np
 import copy
 from abc import ABC
@@ -146,6 +148,28 @@ class trainClassifier():
         li_texts = [li.text for li in soup.find_all('li')]
         return li_texts[1:] # Indexing from 1 since first member of list also contains description specific word, print response and li_texts for detailed understanding.
     
+    def loadNodes(self, xmlPath : str) -> dict:
+        with open(xmlPath, 'r') as file:
+            BTxml = file.read()
+        
+        parser = etree.XMLParser(recover=True)
+        tree = etree.fromstring(BTxml, parser=parser)
+        
+        qq = Queue()
+
+        qq.put(tree)
+
+        node_list = []
+
+        while not qq.empty():
+            # BFS to access all the xml trees' node and store the unique ones
+            node = qq.get()
+            node_list.append((node.tag, '' if len(node.values()) == 0 else node.values()[0]))
+            print(node.tag)
+            for i in node.getchildren():
+                qq.put(i)
+        return dict(list(set(node_list)))
+    
     def createData(self, xmlPath : str) -> None:
         count = 5
         self.nodes = self.loadNodes(xmlPath)
@@ -163,13 +187,15 @@ class trainClassifier():
             label     = label + [i for _ in range(count)]
             
         self.dataframe = pd.DataFrame({'Label' : label, 'Text' : data1, 'davinci_similarity' : resp_embeddings})
-        self.dataframe.to_csv('classificationTraining.csv', index=False)
-        
+        self.dataframe.to_csv('classificationTraining.csv', index=False)    
     
 
 def test():
     tt = Bot()
     tt.create_data("../../pick_and_place/src/BTClient.cpp", "../../pick_and_place/scripts/BTNodeServer.py", "../../pick_and_place/src/temp.xml")
     tt.bot_loop()
+    
+def training_data():
+    tt = trainClassifier()
     
 test()
