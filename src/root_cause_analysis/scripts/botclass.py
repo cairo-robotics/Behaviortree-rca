@@ -2,7 +2,8 @@ import openai, os, re
 import pandas as pd
 from colorama import Fore, Style
 from sklearn.model_selection import train_test_split
-
+from sklearn.cluster import KMeans
+import numpy as np
 import copy
 from abc import ABC
 from comment_parser import comment_parser
@@ -110,8 +111,13 @@ class Bot(ABC):
         
         while True:
             self.message = ""
-            self.message = input("Enter Your Response: ")
+            self.message = f"The log for node {self.mapping[predict]} is {self.nodes_logs[self.mapping[predict]]} and the description for the same is {self.nodes_description[self.mapping[predict]]}, I hope this answers the query about the previous doubt, the user may not be aware exactly but this is what the logs say. User's response about real world observation: "
+            self.message += input("Enter Your Response: ")
             reply = self.conversation.predict(input=self.message)
+            embd      = openai.Embedding.create(input=reply,
+                                                engine="text-similarity-davinci-001")
+            embd      = embd/np.linalg.norm(embd, axis=1, keepdims=True)
+            predict   = self.clustering_model.predict(embd)
             print(Fore.GREEN + reply + Style.RESET_ALL)
 
 
@@ -121,16 +127,36 @@ class trainClassifier():
         self.test_size = 0.2
         self.random_state = 42
         self.classifier = None
+        self.nodes = []
+        self.client = OpenAI()
+
     
-    def loadData(self, path : str) -> None:
-        self.dataframe = pd.read_csv(path)
-        X_train, X_test, y_train, y_test    =   train_test_split(list(self.dataframe.babbage_similarity.values), self.dataframe.Score, test_size=self.test_size, random_state=self.random_state)
-        self.classifier.fit(X_train, y_train)
+    def loadData(self) -> None:
+        self.dataframe = pd.read_csv('classificationTraining.csv')
+        self.clustering_model = KMeans(n_clusters=len(self.nodes))
+        self.clustering_model.fit(self.dataframe.davinci_similarity.values)
+        self.mapping = dict(list(set([(self.clustering_model.labels_[i], self.dataframe.Label.value[i]) for i in range(len(self.clustering_model.labels_))])))
 
-    def createData(self, path : str) -> None:
+    def createData(self, xmlPath : str) -> None:
+        count = 5
+        self.nodes = self.loadNodes(xmlPath)
         
-        pass
-
+        for i in self.nodes:
+            response  = self.client.chat.completions.create(
+                                                model="gpt-3.5-turbo",
+                                                messages=[{"role": "user", "content": f"Write {count} questions about the behaviortree node {i} and write them inside <li> tags so that it is easy to parse."}])
+            
+            data1     = data1 + (self.isolate_description(response))
+            embd      = openai.Embedding.create(input=data1,
+                                                engine="text-similarity-davinci-001")
+            resp_embeddings = resp_embeddings  +  (embd/np.linalg.norm(embd, axis=1, keepdims=True))
+            
+            label     = label + [i for _ in range(count)]
+            
+        self.dataframe = pd.DataFrame({'Label' : label, 'Text' : data1, 'davinci_similarity' : resp_embeddings})
+        self.dataframe.to_csv('classificationTraining.csv', index=False)
+        
+    
 
 def test():
     tt = Bot()
