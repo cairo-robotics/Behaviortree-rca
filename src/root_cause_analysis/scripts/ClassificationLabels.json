@@ -1,0 +1,7 @@
+{
+    "0": "retract",
+    "1": "gripperClose",
+    "4": "visualFeedback",
+    "3": "gripperOpen",
+    "2": "ServoToPose"
+}

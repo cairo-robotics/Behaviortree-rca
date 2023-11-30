@@ -5,6 +5,14 @@ import pandas as pd
 from colorama import Fore, Style
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+import seaborn as sns
+from statistics import mode
+import pickle
+import json
+
+
 from queue import Queue
 from lxml import etree
 import numpy as np
@@ -115,15 +123,18 @@ class Bot(ABC):
         reply = self.conversation.predict(input=self.message)
         print(reply)
         
+        textClassifier = trainClassifier()
+        textClassifier.loadLabelsAndModel("QuestionClassificationModel.pkl", "ClassificationLabels.json")
+        
+        predict = -1
         while True:
-            self.message = ""
-            self.message = f"The log for node {self.mapping[predict]} is {self.nodes_logs[self.mapping[predict]]} and the description for the same is {self.nodes_description[self.mapping[predict]]}, I hope this answers the query about the previous doubt, the user may not be aware exactly but this is what the logs say. User's response about real world observation: "
+
+            self.message = "" if predict == -1 else f"The log for node {textClassifier.mapping[predict]} is {self.nodes_logs[textClassifier.mapping[predict]]} and the description for the same is {self.nodes_description[textClassifier.mapping[predict]]}, I hope this answers the query about the previous doubt, the user may not be aware exactly but this is what the logs say. User's response about real world observation: "
             self.message += input("Enter Your Response: ")
             reply = self.conversation.predict(input=self.message)
-            embd      = openai.Embedding.create(input=reply,
-                                                engine="text-similarity-davinci-001")
-            embd      = embd/np.linalg.norm(embd, axis=1, keepdims=True)
-            predict   = self.clustering_model.predict(embd)
+            embd      = openai.Embedding.create(input=reply, engine="text-similarity-babbage-001")
+            embd      = embd.data[0].embedding/np.linalg.norm(embd.data[0].embedding, axis=0, keepdims=True)
+            predict   = textClassifier.clustering_model.predict(embd)
             print(Fore.GREEN + reply + Style.RESET_ALL)
 
 
@@ -135,18 +146,51 @@ class trainClassifier():
         self.classifier = None
         self.nodes = []
         self.client = OpenAI()
+        self.count = 20
 
+    def loadLabelsAndModel(self, modelPath: str, labelsPath: str) -> None:
+        with open(modelPath, 'rb') as f:
+            self.clustering_model = pickle.load(f)
+        
+        with open(labelsPath, 'r') as f:
+            self.mapping = json.load(f)
     
-    def loadData(self) -> None:
-        self.dataframe = pd.read_csv('classificationTraining.csv')
+    def loadData(self, xmlPath : str) -> None:
+        self.dataframe = pd.read_pickle('classificationTraining.pkl')
+        self.nodes     = []
+        # Saves unique items in a list with relative order maintained.
+        for item in self.dataframe.Label.values:
+            if item not in self.nodes:
+                self.nodes.append(item)
+        
+        X = np.array([i.astype(np.float64) for i in self.dataframe.davinci_similarity.values],dtype=np.float64)
+        
         self.clustering_model = KMeans(n_clusters=len(self.nodes))
-        self.clustering_model.fit(self.dataframe.davinci_similarity.values)
-        self.mapping = dict(list(set([(self.clustering_model.labels_[i], self.dataframe.Label.value[i]) for i in range(len(self.clustering_model.labels_))])))
+        tsne = TSNE(random_state=0, n_iter=10000)
+        tsne_results = tsne.fit_transform(X)
+        df_tsne = pd.DataFrame(tsne_results, columns=['TSNE1', 'TSNE2'])
+        fig, ax = plt.subplots(figsize=(8,6)) # Set figsize
+        sns.set_style('darkgrid', {"grid.color": ".6", "grid.linestyle": ":"})
+        sns.scatterplot(data=df_tsne, x='TSNE1', y='TSNE2')
+        plt.title('Scatter plot of news using t-SNE')
+        plt.xlabel('TSNE1')
+        plt.ylabel('TSNE2')
+        plt.axis('equal')
+        plt.show()
+
+        self.clustering_model.fit(X)
+        [print(f"Clustering of data result in labels for debugging. iter: {int(i/self.count)} \n \n", self.clustering_model.labels_[i:i+self.count], "\n") for i in np.arange(0,len(self.clustering_model.labels_),self.count)]
+        self.mapping = dict(list(set([(int(mode(self.clustering_model.labels_[i:i+self.count])), self.nodes[int(i/self.count)]) for i in np.arange(0, len(self.clustering_model.labels_), self.count)])))
+        with open('QuestionClassificationModel.pkl','wb') as f:
+            pickle.dump(self.clustering_model,f)
+        breakpoint()
+        with open("ClassificationLabels.json", "w") as f:
+            json.dump(self.mapping, f, indent=4)        
 
     def isolate_description(self, response : str) -> list:
         soup = BeautifulSoup(response, 'html.parser')
         li_texts = [li.text for li in soup.find_all('li')]
-        return li_texts[1:] # Indexing from 1 since first member of list also contains description specific word, print response and li_texts for detailed understanding.
+        return li_texts 
     
     def loadNodes(self, xmlPath : str) -> dict:
         with open(xmlPath, 'r') as file:
@@ -164,30 +208,31 @@ class trainClassifier():
         while not qq.empty():
             # BFS to access all the xml trees' node and store the unique ones
             node = qq.get()
-            node_list.append((node.tag, '' if len(node.values()) == 0 else node.values()[0]))
+            if not (node.tag == 'root' or node.tag == 'BehaviorTree' or node.tag == 'Sequence'):
+                node_list.append((node.tag, '' if len(node.values()) == 0 else node.values()[0]))
             print(node.tag)
             for i in node.getchildren():
                 qq.put(i)
         return dict(list(set(node_list)))
     
     def createData(self, xmlPath : str) -> None:
-        count = 5
         self.nodes = self.loadNodes(xmlPath)
-        
+        data1 = []
+        resp_embeddings = []
+        label = []
         for i in self.nodes:
-            response  = self.client.chat.completions.create(
+            response  = openai.ChatCompletion.create(
                                                 model="gpt-3.5-turbo",
-                                                messages=[{"role": "user", "content": f"Write {count} questions about the behaviortree node {i} and write them inside <li> tags so that it is easy to parse."}])
-            
-            data1     = data1 + (self.isolate_description(response))
-            embd      = openai.Embedding.create(input=data1,
-                                                engine="text-similarity-davinci-001")
-            resp_embeddings = resp_embeddings  +  (embd/np.linalg.norm(embd, axis=1, keepdims=True))
-            
-            label     = label + [i for _ in range(count)]
+                                                messages=[{"role": "user", "content": f"Write {self.count} unique questions about the behaviortree node {i} that uniquely capture the action that this behaviortree node does and, write them inside <li> tags so that it is easy to parse."}])
+            ques      = self.isolate_description(response.choices[0].message.content)
+            data1     = data1 + (ques)
+            embd      = openai.Embedding.create(input=ques, engine="text-similarity-babbage-001")
+            resp_embeddings = resp_embeddings  +  [(i.embedding/np.linalg.norm(i.embedding, axis=0, keepdims=True)) for i in embd.data] 
+            label     = label + [i for _ in range(self.count)]
+            print(label, data1, len(data1), len(resp_embeddings))
             
         self.dataframe = pd.DataFrame({'Label' : label, 'Text' : data1, 'davinci_similarity' : resp_embeddings})
-        self.dataframe.to_csv('classificationTraining.csv', index=False)    
+        self.dataframe.to_pickle('classificationTraining.pkl')    
     
 
 def test():
@@ -197,5 +242,9 @@ def test():
     
 def training_data():
     tt = trainClassifier()
+    # tt.createData("../../pick_and_place/src/temp.xml")
+    # tt.loadData("../../pick_and_place/src/temp.xml")
+    tt.loadLabelsAndModel("QuestionClassificationModel.pkl", "ClassificationLabels.json")
+    breakpoint()
     
-test()
+training_data()
