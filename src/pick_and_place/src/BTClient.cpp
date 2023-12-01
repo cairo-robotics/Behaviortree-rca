@@ -262,7 +262,6 @@ class approach : public BT::SyncActionNode{
 class ServoToPose : public BT::SyncActionNode{
     private:
         ros::NodeHandle _nh;
-        geometry_msgs::Pose _targetPose;
     public:
         ServoToPose(const std::string& name, const BT::NodeConfiguration& config, ros::NodeHandle nh)
         : BT::SyncActionNode(name, config), _nh(nh){}
@@ -278,23 +277,10 @@ class ServoToPose : public BT::SyncActionNode{
             // Read from blackboard
             std::string msg;
             BT::TreeNode::getInput("ServoToPose", msg);
-
-            // Check if expected is valid. If not, throw its error
-            if (msg == ""){
-                throw BT::RuntimeError("missing required input [message]");
-            }
-            std::cout << "ServoToPose_msg: " << msg << std::endl; 
-            // use the method value() to extract the valid message.
-            char delimiter = ';';
-            std::vector<float> poseVal = splitString(msg, delimiter);
-            createMsg(&this->_targetPose, poseVal);
-            // Call service here
             ros::ServiceClient client = this->_nh.serviceClient<pick_and_place::servotoPose>(std::string("ServoToPoseCmd"));
-
             pick_and_place::servotoPose srv_call;
-
-            srv_call.request.servo_to_pose = this->_targetPose;
-            std::cout << this->_targetPose;
+            srv_call.request.servo_to_pose = msg;
+            std::cout << msg;
             ros::service::waitForService("ServoToPoseCmd", ros::Duration(5));
 
             if (client.call(srv_call)) {
@@ -490,8 +476,7 @@ static const char* testVisualFeedback = R"(
         <Sequence>
             <gripperOpen/>
             <retract retractCmd="True"/>
-            <visualFeedback ServoToPose="{ServoToPose}"/>
-            <ServoToPose ServoToPose="{ServoToPose}"/>
+            <ServoToPose ServoToPose="ket_location"/>
             <gripperClose/>
             <retract retractCmd="False"/>
             <gripperOpen/>

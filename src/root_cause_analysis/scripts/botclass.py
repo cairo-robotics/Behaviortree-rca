@@ -128,7 +128,6 @@ class Bot(ABC):
         
         predict = -1
         while True:
-
             self.message = "" if predict == -1 else f"The log for node {textClassifier.mapping[predict]} is {self.nodes_logs[textClassifier.mapping[predict]]} and the description for the same is {self.nodes_description[textClassifier.mapping[predict]]}, I hope this answers the query about the previous doubt, the user may not be aware exactly but this is what the logs say. User's response about real world observation: "
             self.message += input("Enter Your Response: ")
             reply = self.conversation.predict(input=self.message)

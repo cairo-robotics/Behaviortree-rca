@@ -10,7 +10,7 @@ from geometry_msgs.msg import (
 from pick_and_place.srv import _gripper, _approach, _servotoPose, _retract
 
 from tf.transformations import quaternion_slerp, quaternion_matrix
-import tf
+import tf, time
 import numpy as np
 import intera_interface
 
@@ -103,7 +103,7 @@ class CommandServer():
         self._loginfo(f"[ApproachServiceServer]", f"Slows down the arm and moves to the desired joint angle positions")
         try:
             self._loginfo(f"[ApproachServiceServer]", f"Calculating joint angles using inbuilt ik service for pose: {pose}")
-            joint_angles = self._limb.ik_request(approach, self._tip_name)
+            joint_angles = self._limb.ik_request(approach)
         except Exception as e:
             self._loginfo(f"[ApproachServiceServer]", e)
             return _approach.approachResponse(False)
@@ -134,41 +134,54 @@ class CommandServer():
 
         return _approach.approachResponse(True)
 
-    def _servo_to_pose(self, servoToPose_msg, timeout=7.0):
+    def _servo_to_pose(self, poseNameTfTree_msg, timeout=7.0):
         """
         _servo_to_pose: A Cartesian move
 
         Args:
-            servoToPose_msg (rosmsg Pose): Pose to servo to in gripper's coordinate frame
-            timeout (seconds):             Timeout for calling the service 
+            poseNameTfTree_msg (rosmsg str): Name of transform in transform tree 
+            timeout (seconds):               Timeout for calling the service 
         Returns:
             servotopose_reply: Success/Failure reply
         """
-        self._loginfo(f"[ServoToPoseServiceServer]", f"Calculating desired pose in base frame of sawyer")
-        transform_base, transform_fk        = tf.transformations.identity_matrix(), tf.transformations.identity_matrix()
-        transform_fk_msg                    = (self._limb.fk_request(self._limb.joint_angles())).pose_stamp[0].pose
-        transform_fk[:3, 3]                 = np.array([transform_fk_msg.position.x, transform_fk_msg.position.y,transform_fk_msg.position.z])
-        transform_fk[:3,:3]                 = quaternion_matrix(np.array([transform_fk_msg.orientation.x, transform_fk_msg.orientation.y, transform_fk_msg.orientation.z, transform_fk_msg.orientation.w]))[:3, :3]
-        transform_base[:3, 3]               = np.array([servoToPose_msg.servo_to_pose.position.x,servoToPose_msg.servo_to_pose.position.y,servoToPose_msg.servo_to_pose.position.z])
-        transform_base[:3,:3]               = quaternion_matrix(np.array([servoToPose_msg.servo_to_pose.orientation.x, servoToPose_msg.servo_to_pose.orientation.y, servoToPose_msg.servo_to_pose.orientation.z, servoToPose_msg.servo_to_pose.orientation.w]))[:3, :3]
-        transform_base                      = np.matmul(transform_fk, np.linalg.inv(transform_base))
-        print(transform_base, transform_fk_msg)
-        qq                                  = tf.transformations.quaternion_from_matrix(transform_base)
+        self._loginfo(f"[ServoToPoseServiceServer]", f"Querying desired pose in base frame of sawyer")
+        listener = tf.TransformListener()
+        tries = 0
+        time.sleep(5)
+        
+        while(tries < 5):
+            try: 
+                (trans,rot) = listener.lookupTransform('/right_gripper_tip', poseNameTfTree_msg.servo_to_pose, rospy.Time(0))
+                Tmat_right_gripper_tip_Ket = tf.transformations.quaternion_matrix(rot)
+                Tmat_right_gripper_tip_Ket[:3, 3] = trans
+                Tmat_fk_msg     = self._limb.fk_request(self._limb.joint_angles()).pose_stamp[0]
+                (trans, rot)    = ([Tmat_fk_msg.pose.position.x, Tmat_fk_msg.pose.position.y, Tmat_fk_msg.pose.position.z], [Tmat_fk_msg.pose.orientation.x, Tmat_fk_msg.pose.orientation.y, Tmat_fk_msg.pose.orientation.z, Tmat_fk_msg.pose.orientation.w])
+                Tmat_fk = tf.transformations.quaternion_matrix(rot)
+                Tmat_fk[:3, 3]  = trans
+                Tmat_final      = np.matmul(Tmat_fk, Tmat_right_gripper_tip_Ket)
+                trans           = Tmat_final[:3, 3]
+                rot             = tf.transformations.quaternion_from_matrix(Tmat_final)
+                break
+            except:
+                self._loginfo(f"[ServoToPoseServiceServer]", f"Failed to fetch the transform between desired position and base.")
+                time.sleep(1)
+                tries += 1
+                continue
+            
         servo_to_pose                       = Pose(position=Point(
-                                                        x=transform_base[0,3],
-                                                        y=transform_base[1,3],
-                                                        z=transform_base[2,3],
+                                                        x=trans[0],
+                                                        y=trans[1],
+                                                        z=trans[2],
                                                     ),
                                                     orientation=Quaternion(
-                                                        x=qq[0],
-                                                        y=qq[1],
-                                                        z=qq[2],
-                                                        w=qq[3],
+                                                        x=rot[0],
+                                                        y=rot[1],
+                                                        z=rot[2],
+                                                        w=rot[3],
                                                     ))
-        
         try:
             self._loginfo(f"[ServoToPoseServiceServer]", f"Calling ik service to ")
-            joint_angles = self._limb.ik_request(servo_to_pose, self._tip_name)
+            joint_angles = self._limb.ik_request(servo_to_pose)
         except Exception as e:
             self._loginfo("ServoToPoseNode", e)
             return _servotoPose.servotoPoseResponse(False) 

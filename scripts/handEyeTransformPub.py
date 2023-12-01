@@ -2,6 +2,8 @@ import rospy
 import tf, json
 import numpy as np
 import tf2_msgs
+from geometry_msgs.msg import Point32, PoseStamped, Pose
+
 
 def readJsonTransfrom(fileName):
     with open(fileName, 'r') as f: data = json.load(f)
@@ -28,6 +30,7 @@ rospy.init_node('hand_eye_calib_transform')
 listener = tf.TransformListener()
 
 rate = rospy.Rate(1000.0)
+published_pose = None
 while not rospy.is_shutdown():
     try:        
         (trans, rot)                    = readJsonTransfrom("/home/dt/HRIPapers/hand_eye_ws/hand_eye_calibration/good_results/calibration.json")
@@ -35,10 +38,21 @@ while not rospy.is_shutdown():
         br.sendTransform((trans[0], trans[1], trans[2]),
                          rot,
                          rospy.Time.now(),
-                         "right_gripper_r_finger_tip",
-                         "camera_color_optical_frame")
+                         "camera_depth_optical_frame",
+                         "right_gripper_r_finger_tip")
         print(trans, rot)
+        try: 
+            published_pose = rospy.wait_for_message("/visionFeedback/MeanValue", PoseStamped, timeout=1)
+            ket_publisher = tf.TransformBroadcaster()
+            ket_publisher.sendTransform((published_pose.pose.position.x, published_pose.pose.position.y, published_pose.pose.position.z),
+                                        (published_pose.pose.orientation.x, published_pose.pose.orientation.y, published_pose.pose.orientation.z, published_pose.pose.orientation.w),
+                                        rospy.Time.now(),
+                                        "ket_location",
+                                        "camera_depth_optical_frame")
+        except:
+            continue
+        
     except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-        pass
+        continue
     
 rospy.spin()

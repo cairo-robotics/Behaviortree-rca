@@ -34,23 +34,23 @@ import open3d
 import cv2, os, copy, math
 import matplotlib.pyplot as plt
 import numpy as np
-from sympy import Point, Ellipse, Circle, RegularPolygon
-from ctypes import * # convert float to uint32
 import time 
-
+import tf
 import tf2_ros
+import json
+
 from sensor_msgs.msg import Image, CameraInfo
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32, PoseStamped, Pose
 from std_msgs.msg import Header
-
 from tf2_msgs.msg import TFMessage
-from tf.transformations import quaternion_from_euler
+from tf.transformations import quaternion_from_matrix
 from scipy.spatial.transform import Rotation as R
 from scipy import stats
 from skimage.transform import hough_ellipse
 from cv_bridge import CvBridge
-
+from sympy import Point, Ellipse, Circle, RegularPolygon
+from ctypes import * # convert float to uint32
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
 from multiprocessing import freeze_support
@@ -67,7 +67,7 @@ class ptCloudNode():
         self.i          = 0
         self.u_min, self.u_max = pt1[0], pt2[0]
         self.v_min, self.v_max = pt1[1], pt2[1]
-        self.holdDistBottom = 0.038
+        self.holdDistBottom = 0.035
         # Create an ellipse of the same major and minor axis as that of the iron KET, then we try to do ICP 
         r = RegularPolygon(Point(0, 0), 0.0065, 3)
         self.e1  =   r.incircle
@@ -123,6 +123,10 @@ class ptCloudNode():
         for i in points:
             ans.append(distance_to_plane(i[0], i[1], i[2], plane_model[0], plane_model[1], plane_model[2], plane_model[3]))
         return ans
+    
+    def readJsonTransfrom(self, fileName):
+        with open(fileName, 'r') as f: data = json.load(f)
+        return (np.array([data['translation']['x'], data['translation']['y'],data['translation']['z']]), np.array([data['rotation']['i'],data['rotation']['j'],data['rotation']['k'],data['rotation']['w']]))
 
     def cannyCallback(self, rgbImg, alighnedDepthImg):
         """
@@ -194,28 +198,66 @@ class ptCloudNode():
                 print("Found Pt: ", i[0], i[1], i[2])
                 contourPtCloud.points.append(Point32(i[0], i[1], i[2]))            
             
-            pose_val = PoseStamped()
+            pose_val               = PoseStamped()
+            cameratoKet            = tf.transformations.euler_matrix(0,0,0,'rxyz') # Here the angle is that of how gripper at the time of pick position (the transform between camera and gripper is already math.pi/2)
+            cameratoKet[:3, 3]     = np.array([self.depthPt.points[0][0], self.depthPt.points[0][1], (self.depthPt.points[0][2] + self.holdDistBottom)])
+            print("t1:", cameratoKet)
+            cameratoKet            = np.linalg.inv(cameratoKet)
+            print("t2:", cameratoKet)
             pose_val.header          = header
-            pose_val.pose.position.x = self.depthPt.points[0][0]
-            pose_val.pose.position.y = self.depthPt.points[0][1]
-            pose_val.pose.position.z = self.depthPt.points[0][2] + self.holdDistBottom
+            pose_val.pose.position.x = cameratoKet[0][3]
+            pose_val.pose.position.y = cameratoKet[1][3]
+            pose_val.pose.position.z = cameratoKet[2][3] 
+            
             print("Point :   ", pose_val.pose.position.x, pose_val.pose.position.y, pose_val.pose.position.z)
-            q = quaternion_from_euler(0, 0, 0)
-                
+            
+            q = quaternion_from_matrix(cameratoKet)
             pose_val.pose.orientation.x = q[0]
             pose_val.pose.orientation.y = q[1]
             pose_val.pose.orientation.z = q[2]
             pose_val.pose.orientation.w = q[3]
             
+            try:        
+                (trans, rot)                    = self.readJsonTransfrom("../src/pick_and_place/src/GripperToCameraTransform.json")
+                br = tf.TransformBroadcaster()
+                br.sendTransform((trans[0], trans[1], trans[2]),
+                                rot,
+                                rospy.Time.now(),
+                                "camera_depth_optical_frame",
+                                "right_gripper_r_finger_tip")
+                try: 
+                    ket_publisher = tf.TransformBroadcaster()
+                    ket_publisher.sendTransform((pose_val.pose.position.x, pose_val.pose.position.y, pose_val.pose.position.z),
+                                                (pose_val.pose.orientation.x, pose_val.pose.orientation.y, pose_val.pose.orientation.z, pose_val.pose.orientation.w),
+                                                rospy.Time.now(),
+                                                "ket_location",
+                                                "camera_depth_optical_frame")
+                except:
+                    self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
+                    self.pickPosePublisher.publish(pose_val)
+                    self.pointcloudPublisher.publish(contourPtCloud)        
+                    self.rate.sleep()
+                    return
+
+                
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
+                self.pickPosePublisher.publish(pose_val)
+                self.pointcloudPublisher.publish(contourPtCloud)        
+                self.rate.sleep()
+                return
+            
             self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
             self.pickPosePublisher.publish(pose_val)
             self.pointcloudPublisher.publish(contourPtCloud)        
             self.rate.sleep()
+            return
         else:
             rospy.logwarn("Failed to find depth point skipping on publishing") 
             self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
             self.pointcloudPublisher.publish(contourPtCloud) 
             self.rate.sleep()
+            return
             
 
     def readPointCloud(self):
