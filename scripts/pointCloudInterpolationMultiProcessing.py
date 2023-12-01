@@ -201,9 +201,7 @@ class ptCloudNode():
             pose_val               = PoseStamped()
             cameratoKet            = tf.transformations.euler_matrix(0,0,0,'rxyz') # Here the angle is that of how gripper at the time of pick position (the transform between camera and gripper is already math.pi/2)
             cameratoKet[:3, 3]     = np.array([self.depthPt.points[0][0], self.depthPt.points[0][1], (self.depthPt.points[0][2] + self.holdDistBottom)])
-            print("t1:", cameratoKet)
             cameratoKet            = np.linalg.inv(cameratoKet)
-            print("t2:", cameratoKet)
             pose_val.header          = header
             pose_val.pose.position.x = cameratoKet[0][3]
             pose_val.pose.position.y = cameratoKet[1][3]
