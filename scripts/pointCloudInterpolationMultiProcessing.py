@@ -31,12 +31,11 @@ effort: [0.0, -0.9, -30.044, -12.944, -1.352, 2.74, 0.22, 0.104, 0.0]
 
 import rospy,message_filters
 import open3d
-import cv2, os, copy, math
+import cv2, copy
 import matplotlib.pyplot as plt
 import numpy as np
 import time 
 import tf
-import tf2_ros
 import json
 
 from sensor_msgs.msg import Image, CameraInfo
@@ -49,9 +48,8 @@ from scipy.spatial.transform import Rotation as R
 from scipy import stats
 from skimage.transform import hough_ellipse
 from cv_bridge import CvBridge
-from sympy import Point, Ellipse, Circle, RegularPolygon
+from sympy import Point, RegularPolygon
 from ctypes import * # convert float to uint32
-from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
 from multiprocessing import freeze_support
                 
@@ -75,54 +73,6 @@ class ptCloudNode():
         self.ket_ellipse = copy.deepcopy(ket_ellipse)
         for i in ket_ellipse:
             self.ket_ellipse.append((i[0], -i[1]))
-
-    
-    def ptCloudcallback_volumeFilling(self, pointcloud):
-        """
-        Callback that recieved depth image message and stores an open3D point cloud from the same
-
-        Args:
-            pointcloud (sensor_msgs.image): depth image from D435 camera
-        """
-        
-        # Depth scale: The Depth scale is 1mm. ROS convention for uint16 depth image https://github.com/IntelRealSense/realsense-ros/issues/714#issuecomment-479907272
-        
-        self.intrinsic_mtrx = np.array(self.cam_info.K)
-        self.intrinsic_mtrx = self.intrinsic_mtrx.reshape((3,3))
-        self.intrinsics_o3d = open3d.camera.PinholeCameraIntrinsic(int(self.cam_info.width), int(self.cam_info.height), self.intrinsic_mtrx)
-        
-        
-        bridge = CvBridge()
-        
-        cv_image = bridge.imgmsg_to_cv2(pointcloud)
-        self.open3dptCloud = open3d.geometry.PointCloud.create_from_depth_image(open3d.geometry.Image(cv_image.astype(np.uint16)), self.intrinsics_o3d) #[self.u_min:self.u_max, self.v_min:self.v_max]
-        self.open3dptCloud.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]) # Check here http://www.open3d.org/docs/latest/tutorial/Basic/rgbd_image.html
-
-        # # estimate radius for rolling ball
-        self.open3dptCloud.estimate_normals()
-        distances = self.open3dptCloud.compute_nearest_neighbor_distance()
-        avg_dist = np.mean(distances)
-        radius = 1.5 * avg_dist   
-
-        self.downpcd = self.open3dptCloud.voxel_down_sample(voxel_size=0.005)
-        plane_model, inliers = self.open3dptCloud.segment_plane(distance_threshold=0.0085, ransac_n = 3, num_iterations=1000) # 0.0085 determined from the dataset
-        self.inlier_cloud = self.open3dptCloud.select_by_index(inliers)
-        
-        self.inlier_cloud.paint_uniform_color([1.0,0,0])
-        self.outlier_cloud = self.open3dptCloud.select_by_index(inliers, invert=True).voxel_down_sample(voxel_size=0.005)
-        
-        filledPtCloud = open3d.geometry.PointCloud()
-        filledPtCloud.points =  outlierCloudInterp(self.outlier_cloud, plane_model, 10)
-        filledPtCloud.paint_uniform_color([1.0,0.5,0.5])
-        
-        open3d.visualization.draw_geometries([self.open3dptCloud, filledPtCloud])
-
-    def dist_PtPlane(plane_model, points):
-        ans = []
-        distance_to_plane = lambda x, y, z, A, B, C, D: abs(A * x + B * y + C * z + D) / ((A ** 2 + B ** 2 + C ** 2) ** 0.5)
-        for i in points:
-            ans.append(distance_to_plane(i[0], i[1], i[2], plane_model[0], plane_model[1], plane_model[2], plane_model[3]))
-        return ans
     
     def readJsonTransfrom(self, fileName):
         with open(fileName, 'r') as f: data = json.load(f)
@@ -157,7 +107,7 @@ class ptCloudNode():
             return 0
 
         for cc in contours[0]:
-            if cv2.contourArea(cc) >= 300 and cv2.contourArea(cc) <= 450: # This condition only holds when the Sawyer arm is 90 cms above the ket
+            if cv2.contourArea(cc) >= 320 and cv2.contourArea(cc) <= 370: # This condition only holds when the Sawyer arm is 90 cms above the ket
                 ellipse     = cv2.fitEllipse(cc)
                 depthPt     = np.flip(ellipse[0])
         if 'depthPt' not in locals().keys():
@@ -195,7 +145,6 @@ class ptCloudNode():
         
         if np.asarray(self.depthPt.points).shape[0] != 0:
             for i in self.depthPt.points:
-                print("Found Pt: ", i[0], i[1], i[2])
                 contourPtCloud.points.append(Point32(i[0], i[1], i[2]))            
             
             pose_val               = PoseStamped()
@@ -276,7 +225,54 @@ class ptCloudNode():
         # rospy.Subscriber(self.topicName, Image ,self.ptCloudcallback, queue_size=1)
         # rospy.Subscriber(self.topicName, Image, self.cannyCallback, queue_size=1)
 
+    # Deprecated and not being used now.
+    def ptCloudcallback_volumeFilling(self, pointcloud):
+        """
+        Callback that recieved depth image message and stores an open3D point cloud from the same
 
+        Args:
+            pointcloud (sensor_msgs.image): depth image from D435 camera
+        """
+        
+        # Depth scale: The Depth scale is 1mm. ROS convention for uint16 depth image https://github.com/IntelRealSense/realsense-ros/issues/714#issuecomment-479907272
+        self.intrinsic_mtrx = np.array(self.cam_info.K)
+        self.intrinsic_mtrx = self.intrinsic_mtrx.reshape((3,3))
+        self.intrinsics_o3d = open3d.camera.PinholeCameraIntrinsic(int(self.cam_info.width), int(self.cam_info.height), self.intrinsic_mtrx)
+        
+        
+        bridge = CvBridge()
+        
+        cv_image = bridge.imgmsg_to_cv2(pointcloud)
+        self.open3dptCloud = open3d.geometry.PointCloud.create_from_depth_image(open3d.geometry.Image(cv_image.astype(np.uint16)), self.intrinsics_o3d) #[self.u_min:self.u_max, self.v_min:self.v_max]
+        self.open3dptCloud.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]) # Check here http://www.open3d.org/docs/latest/tutorial/Basic/rgbd_image.html
+
+        # # estimate radius for rolling ball
+        self.open3dptCloud.estimate_normals()
+        distances = self.open3dptCloud.compute_nearest_neighbor_distance()
+        avg_dist = np.mean(distances)
+        radius = 1.5 * avg_dist   
+
+        self.downpcd = self.open3dptCloud.voxel_down_sample(voxel_size=0.005)
+        plane_model, inliers = self.open3dptCloud.segment_plane(distance_threshold=0.0085, ransac_n = 3, num_iterations=1000) # 0.0085 determined from the dataset
+        self.inlier_cloud = self.open3dptCloud.select_by_index(inliers)
+        
+        self.inlier_cloud.paint_uniform_color([1.0,0,0])
+        self.outlier_cloud = self.open3dptCloud.select_by_index(inliers, invert=True).voxel_down_sample(voxel_size=0.005)
+        
+        filledPtCloud = open3d.geometry.PointCloud()
+        filledPtCloud.points =  outlierCloudInterp(self.outlier_cloud, plane_model, 10)
+        filledPtCloud.paint_uniform_color([1.0,0.5,0.5])
+        
+        open3d.visualization.draw_geometries([self.open3dptCloud, filledPtCloud])
+
+    def dist_PtPlane(plane_model, points):
+        ans = []
+        distance_to_plane = lambda x, y, z, A, B, C, D: abs(A * x + B * y + C * z + D) / ((A ** 2 + B ** 2 + C ** 2) ** 0.5)
+        for i in points:
+            ans.append(distance_to_plane(i[0], i[1], i[2], plane_model[0], plane_model[1], plane_model[2], plane_model[3]))
+        return ans
+
+# Deprecated and not being used now.
 def workerInterp(x,y,z,plane_model,interp,ctr):
         direction_vector = np.array([plane_model[0], plane_model[1], plane_model[2]])
         # Normalize the direction vector
@@ -284,7 +280,8 @@ def workerInterp(x,y,z,plane_model,interp,ctr):
         distance_to_plane = lambda x, y, z, A, B, C, D: abs(A * x + B * y + C * z + D) / ((A ** 2 + B ** 2 + C ** 2) ** 0.5)
         interpolated_point = np.array([np.array([x,y,z]) - (ctr * distance_to_plane(x,y,z,plane_model[0], plane_model[1], plane_model[2], plane_model[3]) / (interp - 1)) * direction_vector])
         return interpolated_point
-    
+
+# Deprecated and not being used now.
 def outlierCloudInterp(outlier_cloud, plane_model, interp):
     interpolated_points = np.array([[]])
 
