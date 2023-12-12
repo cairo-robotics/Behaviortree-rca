@@ -48,7 +48,7 @@ class poseEstimationNode():
         for i in ket_ellipse:
             self.ket_ellipse.append((i[0], -i[1]))
         
-        self.objects = ["ket", "smallKet", "bigCylinder", "smalleCylinder"]
+        self.objects = ["ket", "bigCylinder", "smallCylinder"]
     
     def readJsonTransfrom(self, fileName):
         with open(fileName, 'r') as f: data = json.load(f)
@@ -56,7 +56,7 @@ class poseEstimationNode():
 
     def readJsonPickPosn(self, fileName):
         with open(fileName, 'r') as f: data = json.load(f)
-        return data["SmallKet"], data["BigCylinder"], data["SmallCylinder"]
+        return data["BigCylinder"], data["SmallCylinder"]
 
     def createPose(self, HomogeneousMatrix : np.ndarray, frame_id : str) -> PoseStamped:
         """_summary_
@@ -67,6 +67,7 @@ class poseEstimationNode():
         Returns:
             PoseStamped: Pose message that has to be published/broadcaster, with timestamp
         """
+        pose_msg = PoseStamped()
         header = Header()
         header.stamp = rospy.Time.now()
         header.frame_id = frame_id
@@ -113,12 +114,12 @@ class poseEstimationNode():
             return 0
 
         for cc in contours[0]:
-            if cv2.contourArea(cc) >= 320 and cv2.contourArea(cc) <= 370: # This condition only holds when the Sawyer arm is 90 cms above the ket
+            if cv2.contourArea(cc) >= 320 and cv2.contourArea(cc) <= 380: # This condition only holds when the Sawyer arm is 90 cms above the ket
                 ellipse     = cv2.fitEllipse(cc)
                 depthPt     = np.flip(ellipse[0])
         if 'depthPt' not in locals().keys():
             # Add an internal logging thing here
-            rospy.logwarn("Failed to find depth point skipping on publishing") 
+            rospy.logwarn("Object not found thus skipping.") 
             return 0
              
         modifiedDepthImage  = copy.deepcopy(depthImg)
@@ -151,55 +152,46 @@ class poseEstimationNode():
         
         if np.asarray(self.depthPt.points).shape[0] != 0:
             for i in self.depthPt.points:
-                print("Found Pt: ", i[0], i[1], i[2])
                 contourPtCloud.points.append(Point32(i[0], i[1], i[2]))            
             try:
-                self.posePublisher("/transforms/referencePickLocations.json", "../src/pick_and_place/src/GripperToCameraTransform.json")
+                self.posePublisher("transforms/referencePickLocations.json", "src/pick_and_place/src/GripperToCameraTransform.json", bridge, contourPtCloud)
             except: 
                 rospy.logwarn("Failed to publish transform") 
         
             self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
-            self.pickPosePublisher.publish(pose_val)
+            # self.pickPosePublisher.publish(pose_val)
             self.pointcloudPublisher.publish(contourPtCloud)        
             self.rate.sleep()
             return
         else:
-            rospy.logwarn("Failed to find depth point skipping on publishing") 
+            rospy.logwarn("Failed somewhere else") 
             self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
             self.pointcloudPublisher.publish(contourPtCloud) 
             self.rate.sleep()
             return
     
-    def posePublisher(self, pickLocPath : str, gripperTransformPath : str):
-        SmallKet, BigCylinder, SmallCylinder = self.readJsonPickPosn(pickLocPath)
-        
-        pose_ket               = PoseStamped()
+    def posePublisher(self, pickLocPath : str, gripperTransformPath : str, bridge : CvBridge, contourPtCloud : PointCloud):
+        BigCylinder, SmallCylinder = self.readJsonPickPosn(pickLocPath)
+
         cameratoKet            = tf.transformations.euler_matrix(0,0,0,'rxyz') # Here the angle is that of how gripper at the time of pick position (the transform between camera and gripper is already math.pi/2)
         cameratoKet[:3, 3]     = np.array([self.depthPt.points[0][0], self.depthPt.points[0][1], (self.depthPt.points[0][2] + self.holdDistBottom)])
         cameratoKet            = np.linalg.inv(cameratoKet)
-        # Pose for other 3 objects.
-        pose_SKet                       = PoseStamped() 
-        cameratoSmallKet                = tf.transformations.euler_matrix(0,0,0,'rxyz') # Here the angle is that of how gripper at the time of pick position (the transform between camera and gripper is already math.pi/2)
-        cameratoSmallKet[:3, 3]         = np.array([self.depthPt.points[0][0] + SmallKet[0], self.depthPt.points[0][1] + SmallKet[1], (self.depthPt.points[0][2] + self.holdDistBottom)])
-        cameratoSmallKet                = np.linalg.inv(cameratoSmallKet)
-
-        pose_BCylinder                  = PoseStamped()
+        
+        # Pose for other 2 objects:
         cameratoBigCylinder             = tf.transformations.euler_matrix(0,0,0,'rxyz') # Here the angle is that of how gripper at the time of pick position (the transform between camera and gripper is already math.pi/2)
         cameratoBigCylinder[:3, 3]      = np.array([self.depthPt.points[0][0] + BigCylinder[0], self.depthPt.points[0][1] + BigCylinder[1], (self.depthPt.points[0][2] + self.holdDistBottom)])
         cameratoBigCylinder             = np.linalg.inv(cameratoBigCylinder)
 
-        pose_SCylinder                  = PoseStamped()
         cameratoSmallCylinder           = tf.transformations.euler_matrix(0,0,0,'rxyz') # Here the angle is that of how gripper at the time of pick position (the transform between camera and gripper is already math.pi/2)
         cameratoSmallCylinder[:3, 3]    = np.array([self.depthPt.points[0][0] + SmallCylinder[0], self.depthPt.points[0][1] + SmallCylinder[1], (self.depthPt.points[0][2] + self.holdDistBottom)])
         cameratoSmallCylinder           = np.linalg.inv(cameratoSmallCylinder)
 
         pose_ket                        = self.createPose(cameratoKet, frame_id='camera_depth_optical_frame')
-        pose_SKet                       = self.createPose(cameratoSmallKet, frame_id='camera_depth_optical_frame')
         pose_BCylinder                  = self.createPose(cameratoBigCylinder, frame_id='camera_depth_optical_frame')
         pose_SCylinder                  = self.createPose(cameratoSmallCylinder, frame_id='camera_depth_optical_frame')
-        pose_list                       = [pose_ket, pose_SKet, pose_BCylinder, pose_SCylinder]
+        pose_list                       = [pose_ket, pose_BCylinder, pose_SCylinder]
         
-        print("Point :   ", pose_val.pose.position.x, pose_val.pose.position.y, pose_val.pose.position.z)
+        print("Point :   ", pose_ket.pose.position.x, pose_ket.pose.position.y, pose_ket.pose.position.z)
         
         obj_dict = dict(zip(self.objects, pose_list))
         
@@ -222,7 +214,7 @@ class poseEstimationNode():
 
             except:
                 self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
-                self.pickPosePublisher.publish(pose_val)
+                # self.pickPosePublisher.publish(pose_val)
                 self.pointcloudPublisher.publish(contourPtCloud)        
                 self.rate.sleep()
                 raise
@@ -230,7 +222,7 @@ class poseEstimationNode():
             
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             self.countourPublisher.publish(bridge.cv2_to_imgmsg(self.depthContour.astype(np.uint8)))
-            self.pickPosePublisher.publish(pose_val)
+            # self.pickPosePublisher.publish(pose_val)
             self.pointcloudPublisher.publish(contourPtCloud)        
             self.rate.sleep()
             raise      
