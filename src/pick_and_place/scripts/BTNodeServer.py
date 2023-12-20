@@ -216,7 +216,8 @@ class CommandServer():
             joint_angles = {'right_j0': 0.60579296875, 'right_j1': -0.9182119140625, 'right_j2': -0.5383134765625, 'right_j3': 1.7842587890625, 'right_j4': 0.396298828125, 'right_j5': 0.878787109375, 'right_j6': 3.1722001953125}
         else:
             self._limb.set_joint_position_speed(0.01)
-            joint_angles = {'right_j0': 0.1605078125, 'right_j1': 0.5452626953125, 'right_j2': -1.2906455078125, 'right_j3': 1.2680205078125, 'right_j4': -1.04688671875, 'right_j5': -1.1503220703125, 'right_j6': 3.5907509765625}
+            # joint_angles = {'right_j0': 0.1605078125, 'right_j1': 0.5452626953125, 'right_j2': -1.2906455078125, 'right_j3': 1.2680205078125, 'right_j4': -1.04688671875, 'right_j5': -1.1503220703125, 'right_j6': 3.5907509765625}
+            joint_angles = {'right_j0': 0.1371474609375, 'right_j1': 0.5991552734375, 'right_j2': -1.3724833984375, 'right_j3': 1.231890625, 'right_j4': -1.020689453125, 'right_j5': -1.1806875, 'right_j6': 3.5881650390625}
         try:
             # To retract first move the joint to neutral position
             self._limb.move_to_neutral()
