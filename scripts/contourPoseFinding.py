@@ -72,6 +72,14 @@ class PoseEstimationNode():
                           data['rotation']['k'],data['rotation']['w']]))
 
     def readJsonPickPosn(self, fileName):
+        """_summary_
+
+        Args:
+            fileName (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         with open(fileName, 'r') as f:
             data = json.load(f)
         return data["BigCylinder"], data["SmallCylinder"]
@@ -172,7 +180,7 @@ class PoseEstimationNode():
         self.depthPt = open3d.geometry.PointCloud.create_from_depth_image(open3d.geometry.Image(
                                                                         tempCloud.astype(np.uint16)),
                                                                         self.intrinsics_o3d)
-   
+
         # Check here http://www.open3d.org/docs/latest/tutorial/Basic/rgbd_image.html
         self.open3dptCloud.transform([[1, 0, 0, 0],
                                       [0, -1, 0, 0],
@@ -189,7 +197,7 @@ class PoseEstimationNode():
 
         contourPtCloud = PointCloud()
         contourPtCloud.header = header
-    
+
         for i in self.open3dptCloud.points:
             contourPtCloud.points.append(Point32(i[0], i[1], i[2]))
 
@@ -297,19 +305,42 @@ class PoseEstimationNode():
         """
         rospy.init_node("ReadAndSavePtCloud")
         self.rate           = rospy.Rate(30)
-        self.cam_info       = rospy.wait_for_message(self.baseName + "camera_info",
+        self.cam_info       = rospy.wait_for_message(
+                                                    self.baseName + "camera_info",
                                                     CameraInfo,
                                                     timeout=10)
-        image_sub           = message_filters.Subscriber('/camera/color/image_raw',
+        image_sub           = message_filters.Subscriber(
+                                                        '/camera/color/image_raw',
                                                         Image)
-        depth_sub           = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw',
+        depth_sub           = message_filters.Subscriber(
+                                                        '/camera/aligned_depth_to_color/image_raw',
                                                         Image)
-        self.ts             = message_filters.TimeSynchronizer([image_sub, depth_sub], 1)
+        self.ts             = message_filters.TimeSynchronizer(
+                                                                [image_sub,
+                                                                 depth_sub],
+                                                                1)
 
-        self.pointcloudPublisher        = rospy.Publisher("/ContourPtCloud", PointCloud, queue_size=1)
-        self.originalPtCloudPublisher   = rospy.Publisher("/OriginalPtCloud", PointCloud, queue_size=1)
-        self.countourPublisher          = rospy.Publisher('/ContourImage', Image, queue_size=1)
-        self.pickPosePublisher          = rospy.Publisher("/visionFeedback/MeanValue", PoseStamped, queue_size=1)
+        self.pointcloudPublisher        = rospy.Publisher(
+                                            "/ContourPtCloud",
+                                            PointCloud,
+                                            queue_size=1
+                                            )
+        self.originalPtCloudPublisher   = rospy.Publisher(
+                                            "/OriginalPtCloud",
+                                            PointCloud,
+                                            queue_size=1
+                                            )
+        self.countourPublisher          = rospy.Publisher(
+                                            '/ContourImage',
+                                            Image,
+                                            queue_size=1
+                                            )
+        self.pickPosePublisher          = rospy.Publisher(
+                                            "/visionFeedback/MeanValue",
+                                            PoseStamped,
+                                            queue_size=1
+                                            )
+        
         self.ts.registerCallback(self.canny_callback)
 
 if __name__ == "__main__":
