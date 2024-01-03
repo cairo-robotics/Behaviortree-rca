@@ -1,7 +1,7 @@
 {
-    "0": "retract",
-    "1": "gripperClose",
+    "0": "RetractServiceServer",
+    "1": "GripperServiceServer",
     "4": "visualFeedback",
-    "3": "gripperOpen",
-    "2": "ServoToPose"
+    "3": "GripperServiceServer",
+    "2": "ServoToPoseServiceServer"
 }

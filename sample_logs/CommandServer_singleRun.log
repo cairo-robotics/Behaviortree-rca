@@ -1,0 +1,70 @@
+[rospy.client][INFO] 2024-01-03 14:50:50,824: init_node, name[/CommandServer], pid[87801]
+[xmlrpc][INFO] 2024-01-03 14:50:50,826: XML-RPC server binding to 0.0.0.0:0
+[xmlrpc][INFO] 2024-01-03 14:50:50,827: Started XML-RPC server [http://192.168.50.94:42131/]
+[rospy.impl.masterslave][INFO] 2024-01-03 14:50:50,827: _ready: http://192.168.50.94:42131/
+[rospy.registration][INFO] 2024-01-03 14:50:50,828: Registering with master node http://021708CP00107.local:11311
+[rospy.init][INFO] 2024-01-03 14:50:50,830: ROS Slave URI: [http://192.168.50.94:42131/]
+[rospy.init][INFO] 2024-01-03 14:50:50,830: registered with master
+[rospy.rosout][INFO] 2024-01-03 14:50:50,830: initializing /rosout core topic
+[xmlrpc][INFO] 2024-01-03 14:50:50,834: xml rpc node: starting XML-RPC server
+[rospy.rosout][INFO] 2024-01-03 14:50:50,842: connected to core topic /rosout
+[rospy.simtime][INFO] 2024-01-03 14:50:50,847: /use_sim_time is not set, will not subscribe to simulated time [/clock] topic
+[rospy.internal][INFO] 2024-01-03 14:50:50,933: topic[/robot/limb/right/endpoint_state] adding connection to [http://021708CP00107.local:45207/], count 0
+[rospy.internal][INFO] 2024-01-03 14:50:50,937: topic[/robot/joint_states] adding connection to [http://021708CP00107.local:45207/], count 0
+[rospy.internal][INFO] 2024-01-03 14:50:50,939: topic[/robot/joint_states] adding connection to [http://021708CP00107.local:54334/], count 1
+[rospy.internal][INFO] 2024-01-03 14:50:50,940: topic[/robot/limb/right/collision_detection_state] adding connection to [http://021708CP00107.local:45207/], count 0
+[rospy.internal][INFO] 2024-01-03 14:50:50,940: topic[/robot/limb/right/tip_states] adding connection to [http://021708CP00107.local:45207/], count 0
+[rospy.internal][INFO] 2024-01-03 14:50:50,982: topic[/io/end_effector/config] adding connection to [http://021708CP00107.local:54334/], count 0
+[rospy.internal][INFO] 2024-01-03 14:50:51,078: topic[/rosout] adding connection to [/rosout], count 0
+[rospy.internal][INFO] 2024-01-03 14:50:51,145: topic[/robot/limb/right/set_speed_ratio] adding connection to [/realtime_loop], count 0
+[rospy.internal][INFO] 2024-01-03 14:50:51,146: topic[/robot/limb/right/joint_command_timeout] adding connection to [/realtime_loop], count 0
+[rospy.internal][INFO] 2024-01-03 14:50:51,147: topic[/robot/limb/right/joint_command] adding connection to [/realtime_loop], count 0
+[rospy.internal][INFO] 2024-01-03 14:50:51,157: topic[/io/end_effector/right_gripper/config] adding connection to [http://021708CP00107.local:54334/], count 0
+[rospy.internal][INFO] 2024-01-03 14:50:51,168: topic[/io/end_effector/right_gripper/state] adding connection to [http://021708CP00107.local:54334/], count 0
+[rospy.internal][INFO] 2024-01-03 14:50:51,193: topic[/robot/state] adding connection to [http://021708CP00107.local:45207/], count 0
+[rosout][INFO] 2024-01-03 14:50:51,208: Robot Enabled
+[rospy.internal][INFO] 2024-01-03 14:50:51,377: topic[/io/end_effector/right_gripper/command] adding connection to [/end_effector_io], count 0
+[rospy.internal][INFO] 2024-01-03 14:50:51,378: topic[/robot/set_super_enable] adding connection to [/realtime_loop], count 0
+[rosout][INFO] 2024-01-03 14:50:55,583: CommandServerLog([GripperServiceServer]):  Started Executing Gripper Open
+[rosout][INFO] 2024-01-03 14:50:57,689: CommandServerLog([GripperServiceServer]):  Successfully executed gripper Open command
+[rosout][INFO] 2024-01-03 14:50:58,884: CommandServerLog([GuardedMoveToJointPositionServer]):  Started Executing guarded move to joint position, timeout = 5.0
+[rosout][INFO] 2024-01-03 14:51:00,058: CommandServerLog([GuardedMoveToJointPositionServer]):  Successfully executed guarded move to joint position
+[rosout][INFO] 2024-01-03 14:51:00,071: CommandServerLog([ServoToPoseServiceServer]):  Querying desired pose in base frame of sawyer
+[rospy.internal][INFO] 2024-01-03 14:51:00,097: topic[/tf] adding connection to [http://192.168.50.94:46323/], count 0
+[rospy.internal][INFO] 2024-01-03 14:51:00,099: topic[/tf] adding connection to [http://192.168.50.94:44673/], count 1
+[rospy.internal][INFO] 2024-01-03 14:51:00,100: topic[/tf_static] adding connection to [http://192.168.50.94:46323/], count 0
+[rospy.internal][INFO] 2024-01-03 14:51:00,102: topic[/tf_static] adding connection to [http://021708CP00107.local:55739/], count 1
+[rospy.internal][INFO] 2024-01-03 14:51:00,102: topic[/tf] adding connection to [http://021708CP00107.local:45051/], count 2
+[rospy.internal][INFO] 2024-01-03 14:51:00,103: topic[/tf] adding connection to [http://021708CP00107.local:40451/], count 2
+[rospy.internal][INFO] 2024-01-03 14:51:00,121: topic[/tf_static] adding connection to [http://021708CP00107.local:41717/], count 2
+[rosout][INFO] 2024-01-03 14:51:05,107: CommandServerLog([ServoToPoseServiceServer]):  Calling ik service to 
+[rosout][INFO] 2024-01-03 14:51:07,735: CommandServerLog([GripperServiceServer]):  Started Executing Gripper Close
+[rosout][INFO] 2024-01-03 14:51:09,844: CommandServerLog([GripperServiceServer]):  Successfully executed gripper Close command
+[rosout][INFO] 2024-01-03 14:51:12,103: CommandServerLog([GuardedMoveToJointPositionServer]):  Started Executing guarded move to joint position, timeout = 5.0
+[rosout][INFO] 2024-01-03 14:51:16,579: CommandServerLog([GuardedMoveToJointPositionServer]):  Successfully executed guarded move to joint position
+[rospy.core][INFO] 2024-01-03 14:51:40,397: signal_shutdown [signal-2]
+[rospy.internal][INFO] 2024-01-03 14:51:40,410: topic[/rosout] removing connection to /rosout
+[rospy.internal][INFO] 2024-01-03 14:51:40,411: topic[/robot/limb/right/set_speed_ratio] removing connection to /realtime_loop
+[rospy.internal][INFO] 2024-01-03 14:51:40,411: topic[/robot/limb/right/joint_command] removing connection to /realtime_loop
+[rospy.internal][INFO] 2024-01-03 14:51:40,411: topic[/robot/limb/right/joint_command_timeout] removing connection to /realtime_loop
+[rospy.internal][INFO] 2024-01-03 14:51:40,411: topic[/io/end_effector/right_gripper/command] removing connection to /end_effector_io
+[rospy.internal][INFO] 2024-01-03 14:51:40,411: topic[/robot/set_super_enable] removing connection to /realtime_loop
+[rospy.internal][INFO] 2024-01-03 14:51:40,411: topic[/robot/limb/right/endpoint_state] removing connection to http://021708CP00107.local:45207/
+[rospy.internal][INFO] 2024-01-03 14:51:40,412: topic[/robot/limb/right/tip_states] removing connection to http://021708CP00107.local:45207/
+[rospy.internal][INFO] 2024-01-03 14:51:40,412: topic[/robot/limb/right/collision_detection_state] removing connection to http://021708CP00107.local:45207/
+[rospy.internal][INFO] 2024-01-03 14:51:40,412: topic[/robot/joint_states] removing connection to http://021708CP00107.local:45207/
+[rospy.internal][INFO] 2024-01-03 14:51:40,413: topic[/robot/joint_states] removing connection to http://021708CP00107.local:54334/
+[rospy.internal][INFO] 2024-01-03 14:51:40,414: topic[/io/end_effector/config] removing connection to http://021708CP00107.local:54334/
+[rospy.internal][INFO] 2024-01-03 14:51:40,414: topic[/io/end_effector/config] removing connection to http://021708CP00107.local:54334/
+[rospy.internal][INFO] 2024-01-03 14:51:40,414: topic[/io/end_effector/right_gripper/config] removing connection to http://021708CP00107.local:54334/
+[rospy.internal][INFO] 2024-01-03 14:51:40,415: topic[/io/end_effector/right_gripper/state] removing connection to http://021708CP00107.local:54334/
+[rospy.internal][INFO] 2024-01-03 14:51:40,415: topic[/robot/state] removing connection to http://021708CP00107.local:45207/
+[rospy.internal][INFO] 2024-01-03 14:51:40,416: topic[/tf] removing connection to http://192.168.50.94:46323/
+[rospy.internal][INFO] 2024-01-03 14:51:40,416: topic[/tf] removing connection to http://192.168.50.94:44673/
+[rospy.internal][INFO] 2024-01-03 14:51:40,416: topic[/tf] removing connection to http://021708CP00107.local:45051/
+[rospy.internal][INFO] 2024-01-03 14:51:40,416: topic[/tf] removing connection to http://021708CP00107.local:40451/
+[rospy.internal][INFO] 2024-01-03 14:51:40,417: topic[/tf_static] removing connection to http://192.168.50.94:46323/
+[rospy.internal][INFO] 2024-01-03 14:51:40,417: topic[/tf_static] removing connection to http://021708CP00107.local:55739/
+[rospy.internal][INFO] 2024-01-03 14:51:40,417: topic[/tf_static] removing connection to http://021708CP00107.local:41717/
+[rospy.impl.masterslave][INFO] 2024-01-03 14:51:40,417: signal-2
+[rospy.core][INFO] 2024-01-03 14:51:40,998: signal_shutdown [atexit]

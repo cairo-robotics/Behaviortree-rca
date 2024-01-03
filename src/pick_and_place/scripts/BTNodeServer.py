@@ -31,10 +31,10 @@ class CommandServer():
 
     def _guarded_move_to_joint_position(self, joint_angles, timeout=5.0):
         """
-        _guarded_move_to_joint_position: Moves the arm to the given joint angles
+        GuardedMoveToJointPositionServer: Moves the arm to the given joint angles
 
         Args:
-            joint_angles (_type_): _description_ #TODO: Fill the datatype
+            joint_angles (np.array): Joint angles to give to the controller.
             timeout (float, optional): timeout to giving command and recieving ack from sawyer. Defaults to 5.0.
 
         Returns:
@@ -53,7 +53,7 @@ class CommandServer():
 
     def gripper_srv(self, cmd):
         """
-        gripper_srv: Gripper command callback for the gripper_cmd service
+        GripperServiceServer: Gripper command callback for the gripper_cmd service
 
         Args:
             cmd (string): Command to open or close the gripper
@@ -61,23 +61,27 @@ class CommandServer():
         Returns:
             gripper_reply (boolean): Success/Failure reply
         """
-        self._loginfo("[GripperServiceServer]", f"Started Executing Gripper {cmd}")
+        self._loginfo("[GripperServiceServer]", f"Started Executing Gripper {cmd.gripper_cmd}")
         if cmd.gripper_cmd == 'Open':
             try:
                 rospy.sleep(1.0)
                 self._gripper.open()
                 rospy.sleep(1.0)
-                self._loginfo("[GripperServiceServer]", f"Successfully executed gripper {cmd} command")
+                self._loginfo("[GripperServiceServer]",
+                              f"Successfully executed gripper {cmd.gripper_cmd} command"
+                              )
                 return _gripper.gripperResponse(True)
             except Exception as e:
                 self._loginfo("[GripperServiceServer]", e)
-                return _gripper.gripperResponse(False) 
+                return _gripper.gripperResponse(False)
         elif cmd.gripper_cmd == 'Close':
             try:
                 rospy.sleep(1.0)
                 self._gripper.close()
                 rospy.sleep(1.0)
-                self._loginfo("[GripperServiceServer]", f"Successfully executed gripper {cmd} command")
+                self._loginfo("[GripperServiceServer]",
+                              f"Successfully executed gripper {cmd.gripper_cmd} command"
+                              )
                 return _gripper.gripperResponse(True)
             except Exception as e:
                 self._loginfo("[GripperServiceServer]", e)
@@ -85,11 +89,11 @@ class CommandServer():
         else: 
             self._loginfo("[GripperServiceServer]", "Invalid Command From Client: " + cmd.gripper_cmd)
             return _gripper.gripperResponse(False)
-        
+
 
     def _approach(self, pose):
         """
-        _approach: Slows down the arm and moves to the desired joint angle positions
+        ApproachServiceServer: Slows down the arm and moves to the desired joint angle positions
 
         Args:
             pose (rosmsg pose): Desired pose where arm has to reach
@@ -136,7 +140,7 @@ class CommandServer():
 
     def _servo_to_pose(self, poseNameTfTree_msg, timeout=7.0):
         """
-        _servo_to_pose: A Cartesian move
+        ServoToPoseServiceServer: A Cartesian move
 
         Args:
             poseNameTfTree_msg (rosmsg str): Name of transform in transform tree 
@@ -162,11 +166,8 @@ class CommandServer():
                 trans           = Tmat_final[:3, 3]
                 rot             = tf.transformations.quaternion_from_matrix(Tmat_final)
                 break
-            except:
-                self._loginfo(
-                            "[ServoToPoseServiceServer]",
-                            "Failed to fetch the transform between desired position and base."
-                            )
+            except Exception as e:
+                self._loginfo("[ServoToPoseServiceServer]", "Failed to fetch the transform between desired position and base.")
                 time.sleep(1)
                 tries += 1
                 continue
@@ -187,24 +188,26 @@ class CommandServer():
             joint_angles = self._limb.ik_request(servo_to_pose)
         except Exception as e:
             self._loginfo("[ServoToPoseServiceServer]", e)
-            return _servotoPose.servotoPoseResponse(False) 
+            return _servotoPose.servotoPoseResponse(False)
 
         if joint_angles:
             try:
                 self._limb.move_to_joint_positions(joint_angles, timeout=timeout)
             except Exception as e:
                 self._loginfo("[ServoToPoseServiceServer]", e)
-                return _servotoPose.servotoPoseResponse(False) 
+                return _servotoPose.servotoPoseResponse(False)
         else:
+            self._loginfo("[ServoToPoseServiceServer]",
+                          "No Joint Angles provided for move_to_joint_positions. Staying put.")
             rospy.logerr("No Joint Angles provided for move_to_joint_positions. Staying put.")
-            return _servotoPose.servotoPoseResponse(False) 
-        
+            return _servotoPose.servotoPoseResponse(False)
+
         rospy.sleep(1.0)
-        return _servotoPose.servotoPoseResponse(True) 
+        return _servotoPose.servotoPoseResponse(True)
 
     def _retract(self, cmd):
         """
-        _retract: Move to pose at a hoverdistance
+        RetractServiceServer: Move to pose at a hoverdistance
 
         Args:
             cmd (Bool): Choose one of the two positions to be retracted to
@@ -216,11 +219,25 @@ class CommandServer():
         """
         # retrieve current pose from endpoint
         if cmd.retract_cmd:
-            joint_angles = {'right_j0': 0.60579296875, 'right_j1': -0.9182119140625, 'right_j2': -0.5383134765625, 'right_j3': 1.7842587890625, 'right_j4': 0.396298828125, 'right_j5': 0.878787109375, 'right_j6': 3.1722001953125}
+            joint_angles = {'right_j0': 0.60579296875,
+                            'right_j1': -0.9182119140625,
+                            'right_j2': -0.5383134765625,
+                            'right_j3': 1.7842587890625,
+                            'right_j4': 0.396298828125,
+                            'right_j5': 0.878787109375,
+                            'right_j6': 3.1722001953125
+                            }
         else:
             self._limb.set_joint_position_speed(0.01)
             # joint_angles = {'right_j0': 0.1605078125, 'right_j1': 0.5452626953125, 'right_j2': -1.2906455078125, 'right_j3': 1.2680205078125, 'right_j4': -1.04688671875, 'right_j5': -1.1503220703125, 'right_j6': 3.5907509765625}
-            joint_angles = {'right_j0': 0.1371474609375, 'right_j1': 0.5991552734375, 'right_j2': -1.3724833984375, 'right_j3': 1.231890625, 'right_j4': -1.020689453125, 'right_j5': -1.1806875, 'right_j6': 3.5881650390625}
+            joint_angles = {'right_j0': 0.1371474609375,
+                            'right_j1': 0.5991552734375,
+                            'right_j2': -1.3724833984375,
+                            'right_j3': 1.231890625,
+                            'right_j4': -1.020689453125,
+                            'right_j5': -1.1806875,
+                            'right_j6': 3.5881650390625
+                            }
         try:
             # To retract first move the joint to neutral position
             self._limb.move_to_neutral()
