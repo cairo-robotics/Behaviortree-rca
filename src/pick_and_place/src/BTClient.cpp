@@ -479,9 +479,10 @@ static const char* testVisualFeedback = R"(
             <ServoToPose ServoToPose="bigCylinder_location"/>
             <gripperClose/>
             <retract retractCmd="False"/>
+            <ServoToPose ServoToPose="tag_118"/>
         </Sequence>
     </BehaviorTree ID="DemoTry">
- </root>
+ </root>2
 )";
 
 int main(int argc, char **argv){

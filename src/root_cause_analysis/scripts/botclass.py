@@ -218,7 +218,9 @@ class Bot(ABC):
 
     def cluster_prompt(self, message : str, textClassifier : trainClassifier) -> None:
         embd      = openai.Embedding.create(input=message, engine="text-similarity-babbage-001")
-        embd      = embd.data[0].embedding/np.linalg.norm(embd.data[0].embedding, axis=0, keepdims=True).reshape(1, -1)
+        embd      = embd.data[0].embedding/np.linalg.norm(embd.data[0].embedding,
+                                                          axis=0,
+                                                          keepdims=True).reshape(1, -1)
         predict   = textClassifier.clustering_model.predict(embd)
         return predict
 
@@ -265,13 +267,15 @@ class Bot(ABC):
         self.nodes_logs = pd.DataFrame(parsed_data)
 
     def bot_loop(self):
+        """_summary_
+        """
         self.message = ""
         self.init_message()
         self.chatbot_prompt()
 
         # Reply after conditioning GPT to be a chat agent
         reply = self.conversation.predict(input=self.message)
-        print(reply)
+        print(Fore.GREEN + reply + Style.RESET_ALL)
 
         textClassifier = trainClassifier()
         textClassifier.loadLabelsAndModel(
@@ -279,17 +283,18 @@ class Bot(ABC):
             "ClassificationLabels.json"
             )
         self.load_logs(str(Path.home()) + "/.ros/log/CommandServer.log")
-        
-        # Predict is string of an int because text classifier mapping takes str of respective numbers to identify clustered nodes from the KMeans model
+
+        # Predict is string of an int because text classifier mapping takes str of respective numbers
+        # to identify clustered nodes from the KMeans model
         predict = "-1"
-        
+
         while True:
             if predict != "-1":
                 occurance_log = ""
                 occourances = self.nodes_logs.node_name.index[self.nodes_logs.node_name == textClassifier.mapping[str(predict[0])]]
                 for i in occourances:
                     occurance_log += self.nodes_logs.node_log[i] + " at time: " + self.nodes_logs.date_time[i] + "; "
-            breakpoint()
+
             self.message = "" if predict == "-1" else f"The log for node {textClassifier.mapping[predict]} is {occurance_log} and the description for the same is {self.ServerFunctions_dict[textClassifier.mapping[predict]].short_description}, I hope this answers the query about the previous doubt, the user may not be aware exactly but this is what the logs say. User's response about real world observation: "
             self.message += input("Enter Your Response: ")
             reply = self.conversation.predict(input=self.message)

@@ -39,7 +39,7 @@ The visual feedback to pick up the object is achieved using a separate node cont
 The algorithm after that can be broken down as:
 
 - Smooth the image using a bilateral filter to remove noise from sharp changes in contrast.
-- Convert the RGB image to HSV image, this makes the iron ket(grey) easily detectable on pink mat.
+- Convert the RGB image to HSV image, this makes the iron ket(grey) easily detectable on violet mat.
 - Find the edges in the image using Canny edge detection
 - Find contours in this image to identify the ket.
 - If any contour has an area between 320 - 380 (these numbers are unique for the ket but depend on the height at which camera is located) pixels, then ket is detected.
@@ -61,6 +61,14 @@ The hand-eye calibration can be achieved using [this](https://github.com/dt1729/
 
 <img src="PickPose.png" alt="PickPoseDeterminationOutput" width="200"/>
 
+#### Insert Pose determination method
+
+The insert pose determination requires the apriltag-ros node that detects the pose of the apriltag stuck on the NIST board. This method is the replacement for a forcetorque based method for this sawyer robot. The flow is explained as follows:
+- The continuous detection node in apriltag-ros publishes the pose in the /tf topic.
+- The servotopose client node in the behaviortree asks the server to servo to tag_118's pose.
+- The servo then moves to that pose. (This needs to be modified with a json file that stores poses of goal position with respect to apriltag's center)
+
+The settings.yaml and tags.yaml files in the `./dependencies/apriltag_ros/src/apriltag_ros/config` folder shall be replaced by files with the same names in the dependencies folder.
 
 #### Pick and place with Ket Full run 1
 
