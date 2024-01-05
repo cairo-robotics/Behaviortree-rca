@@ -479,7 +479,7 @@ static const char* testVisualFeedback = R"(
             <ServoToPose ServoToPose="bigCylinder_location"/>
             <gripperClose/>
             <retract retractCmd="False"/>
-            <ServoToPose ServoToPose="tag_118"/>
+            <ServoToPose ServoToPose="bigCylinder_insertion"/>
         </Sequence>
     </BehaviorTree ID="DemoTry">
  </root>2
