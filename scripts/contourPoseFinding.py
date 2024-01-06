@@ -14,8 +14,9 @@ import dataclasses
 
 from sensor_msgs.msg import Image, CameraInfo
 from sensor_msgs.msg import PointCloud
-from geometry_msgs.msg import Point32, PoseStamped, Pose
+from geometry_msgs.msg import Point32, PoseStamped, Pose, TransformStamped
 from std_msgs.msg import Header
+
 from tf2_msgs.msg import TFMessage
 from tf.transformations import quaternion_from_matrix
 from scipy.spatial.transform import Rotation as R
@@ -63,7 +64,7 @@ class PoseEstimationNode():
 
         self.objects = ["ket", "bigCylinder", "smallCylinder"]
 
-    def readJsonTransfrom(self, fileName):
+    def readJsonTransfrom(self, fileName : str):
         with open(fileName, 'r') as f:
             data = json.load(f)
         return (np.array([data['translation']['x'],
@@ -71,7 +72,7 @@ class PoseEstimationNode():
                 np.array([data['rotation']['i'],data['rotation']['j'],
                           data['rotation']['k'],data['rotation']['w']]))
 
-    def readJsonPickPosn(self, fileName):
+    def readJsonPickPosn(self, fileName : str):
         """Reads pick positions for bigCylinder and small cylinders in the ket's frame of reference.
 
         Args:
@@ -95,7 +96,7 @@ class PoseEstimationNode():
         """
         with open(fileName, 'r') as f:
             data = json.load(f)
-        return data["ket"], data["BigCylinder"], data["SmallCylinder"]
+        return data["Ket"], data["BigCylinder"], data["SmallCylinder"]
 
     
     def createPose(self, homogeneous_matrix : np.ndarray, frame_id : str) -> PoseStamped:
@@ -175,6 +176,11 @@ class PoseEstimationNode():
         self.depthContour  = (modifiedDepthImage & edges.astype(np.int16)).astype(np.float32)
 
         self.depthContour[self.depthContour!=0] = np.float32(tableDepth)
+        try:
+            assert ((depthPt[0] <= np.shape(self.depthContour)[0]) and (depthPt[1] <= np.shape(self.depthContour)[1]))
+        except AssertionError:
+            rospy.logerr("DepthPoint calculated outside the given image, which may not be correct.")
+            return
 
         self.depthContour[int(depthPt[0]), int(depthPt[1])] = np.float32(tableDepth)
 
@@ -220,9 +226,9 @@ class PoseEstimationNode():
                 contourPtCloud.points.append(Point32(i[0], i[1], i[2]))
             try:
                 self.pickPosePublisher("transforms/referencePickLocations.json",
-                                   "src/pick_and_place/src/GripperToCameraTransform.json",
-                                   bridge,
-                                   contourPtCloud)
+                                    "src/pick_and_place/src/GripperToCameraTransform.json",
+                                    bridge,
+                                    contourPtCloud)
             except RuntimeError:
                 rospy.logwarn("Failed to publish transform")
 
@@ -237,21 +243,26 @@ class PoseEstimationNode():
             self.rate.sleep()
             return
 
-    def aprilTagCallback(self, tf_msg: rospy.AnyMsg):
+    def aprilTagCallback(self, tf_msg: TFMessage):
         """_summary_
 
         Args:
             tf_msg (rospy.AnyMsg): _description_
         """
         try:
-            self.insertPosePublisher("transforms/referencePickLocations.json",
-                                    "src/pick_and_place/src/GripperToCameraTransform.json",
-                                    )
+            if tf_msg.transforms[0].child_frame_id == 'tag_118':
+                self.insertPosePublisher("transforms/referenceInsertLocations.json",
+                                        "src/pick_and_place/src/GripperToCameraTransform.json",
+                                        tf_msg.transforms[0]
+                                        )
+            else:
+                pass
+
         except RuntimeError:
             rospy.logwarn("Failed to publish insert transform")
 
 
-    def insertPosePublisher(self, insertLocPath : str, gripperTransformPath: str):
+    def insertPosePublisher(self, insertLocPath : str, gripperTransformPath: str, transform : TransformStamped):
         """Publishes insertion pose on the /tf topic
 
         Args:
@@ -260,32 +271,28 @@ class PoseEstimationNode():
         """
         ket, BigCylinder, SmallCylinder = self.readJsonInsertPosn(insertLocPath)
 
-        listener = tf.TransformListener()
         try:
-            (trans,rot) = listener.lookupTransform(
-                                    '/camera_color_optical_frame',
-                                    '/tag_118',
-                                    rospy.Time(0)
-                                    )
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            rospy.loginfo("InsertPoseNode: Failed to fetch ")
+            (trans,rot) = ([transform.transform.translation.x, transform.transform.translation.y, transform.transform.translation.z],
+                           [transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z,
+                            transform.transform.rotation.w])
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, RuntimeError):
+            rospy.loginfo("InserPoseDetermination: Failed to fetch transform, maybe you're not in placing position")
             raise
 
 
         baseTransform            = tf.transformations.euler_matrix(0,0,0,'rxyz')
-        baseTransform[:3, :3]    = tf.transformations.quaternion_matrix(rot)[:3,:3]
 
         cameratoKet              = copy.deepcopy(baseTransform)
         cameratoKet[:3, 3]       = np.array([trans[0] + ket[0],
                                              trans[1] + ket[1],
                                              trans[2] + ket[2]])
-
-        cameratoBigCylinder            = baseTransform
+        
+        cameratoBigCylinder            = copy.deepcopy(baseTransform)
         cameratoBigCylinder[:3, 3]     = np.array([trans[0] + BigCylinder[0],
                                                    trans[1] + BigCylinder[1],
                                                    trans[2] + BigCylinder[2]])
 
-        cameratoSmallCylinder          = baseTransform
+        cameratoSmallCylinder          = copy.deepcopy(baseTransform)
         cameratoSmallCylinder[:3, 3]   = np.array([trans[0] + SmallCylinder[0],
                                                    trans[1] + SmallCylinder[1],
                                                    trans[2] + SmallCylinder[2]])
@@ -308,7 +315,7 @@ class PoseEstimationNode():
             br.sendTransform((trans[0], trans[1], trans[2]),
                             rot,
                             rospy.Time.now(),
-                            "camera_depth_optical_frame",
+                            "camera_color_optical_frame",
                             "right_gripper_r_finger_tip")
             try:
                 for i in obj_dict:
@@ -330,6 +337,7 @@ class PoseEstimationNode():
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             self.rate.sleep()
             raise
+        rospy.loginfo("InserPoseDetermination: Successfully published insert positions")
 
     def pickPosePublisher(self, pickLocPath : str, gripperTransformPath : str, bridge : CvBridge, contourPtCloud : PointCloud):
         """_summary_
@@ -433,7 +441,10 @@ class PoseEstimationNode():
                                                                 [image_sub,
                                                                  depth_sub],
                                                                 1)
-        self.aruco_sub      = rospy.Subscriber("/tf", rospy.AnyMsg, self.insertPosePublisher)
+        self.aruco_sub      = rospy.Subscriber("/tf",
+                                               TFMessage,
+                                               self.aprilTagCallback
+                                               )
 
         self.pointcloudPublisher        = rospy.Publisher(
                                             "/ContourPtCloud",
