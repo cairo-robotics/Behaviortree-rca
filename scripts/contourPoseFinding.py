@@ -177,7 +177,7 @@ class PoseEstimationNode():
 
         self.depthContour[self.depthContour!=0] = np.float32(tableDepth)
         try:
-            assert ((depthPt[0] <= np.shape(self.depthContour)[0]) and (depthPt[1] <= np.shape(self.depthContour)[1]))
+            assert ((int(depthPt[0]) < np.shape(self.depthContour)[0]) and (int(depthPt[1]) < np.shape(self.depthContour)[1]))
         except AssertionError:
             rospy.logerr("DepthPoint calculated outside the given image, which may not be correct.")
             return

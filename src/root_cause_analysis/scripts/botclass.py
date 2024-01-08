@@ -1,9 +1,6 @@
-#https://medium.com/@reddyyashu20/gpt-3-embeddings-perform-text-similarity-semantic-search-classification-and-clustering-part-4-abbcf447faf8
-
 import openai, os, re
 import pandas as pd
 from colorama import Fore, Style
-from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
@@ -11,7 +8,7 @@ import seaborn as sns
 from statistics import mode
 import pickle
 import json
-
+import shutil
 
 from queue import Queue
 from lxml import etree
@@ -235,7 +232,8 @@ class Bot(ABC):
         with open(logs_loc, 'r') as file:
             for line in file:
                 # You can process the line here if needed
-                log_lines.append(line.strip())  # strip() removes any leading/trailing whitespace including newlines
+                # strip() removes any leading/trailing whitespace including newlines
+                log_lines.append(line.strip())  
 
         fmt = "[{rospy_node_type}][{log_severity}] {date_time}: {node_log}"
 
@@ -269,12 +267,16 @@ class Bot(ABC):
     def bot_loop(self):
         """_summary_
         """
+
         self.message = ""
         self.init_message()
         self.chatbot_prompt()
-
+        save_conversation = ""
+        save_conversation += "User response: " + self.message + "\n \n"
         # Reply after conditioning GPT to be a chat agent
         reply = self.conversation.predict(input=self.message)
+        save_conversation += "AI response: " + reply + "\n \n"
+
         print(Fore.GREEN + reply + Style.RESET_ALL)
 
         textClassifier = trainClassifier()
@@ -284,7 +286,8 @@ class Bot(ABC):
             )
         self.load_logs(str(Path.home()) + "/.ros/log/CommandServer.log")
 
-        # Predict is string of an int because text classifier mapping takes str of respective numbers
+        # Predict is string of an int because text classifier
+        # mapping takes str of respective numbers
         # to identify clustered nodes from the KMeans model
         predict = "-1"
 
@@ -297,9 +300,28 @@ class Bot(ABC):
 
             self.message = "" if predict == "-1" else f"The log for node {textClassifier.mapping[predict]} is {occurance_log} and the description for the same is {self.ServerFunctions_dict[textClassifier.mapping[predict]].short_description}, I hope this answers the query about the previous doubt, the user may not be aware exactly but this is what the logs say. User's response about real world observation: "
             self.message += input("Enter Your Response: ")
+
+            save_conversation += "User response: " + self.message[21:] + "\n \n"
+
             reply = self.conversation.predict(input=self.message)
+
+            save_conversation += "AI response: " + reply + "\n \n"
+
             predict = str(self.cluster_prompt(reply, textClassifier)[0])
             print(Fore.GREEN + reply + Style.RESET_ALL)
+
+            if "complete" in reply and "report" in reply:
+
+                shutil.move(str(Path.home()) + "/.ros/log/CommandServer.log",
+                            str(Path.home()) + "/HRIPapers/Experiments/CommandServer.log"
+                            )
+
+                with open("Conversation.txt", "w") as text_file:
+                    text_file.write(save_conversation)
+
+                shutil.move("Conversation.txt",
+                            str(Path.home()) + "/HRIPapers/Experiments/Conversation.txt"
+                            )
 
 def bot_test():
     """_summary_

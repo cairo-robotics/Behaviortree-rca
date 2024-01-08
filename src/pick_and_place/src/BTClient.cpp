@@ -476,10 +476,10 @@ static const char* testVisualFeedback = R"(
         <Sequence>
             <gripperOpen/>
             <retract retractCmd="True"/>
-            <ServoToPose ServoToPose="smallCylinder_location"/>
+            <ServoToPose ServoToPose="bigCylinder_location"/>
             <gripperClose/>
             <retract retractCmd="False"/>
-            <ServoToPose ServoToPose="smallCylinder_insertion"/>
+            <ServoToPose ServoToPose="bigCylinder_insertion"/>
             <gripperOpen/>
         </Sequence>
     </BehaviorTree ID="DemoTry">
