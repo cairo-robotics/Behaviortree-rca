@@ -70,10 +70,9 @@ The insert pose determination requires the apriltag-ros node that detects the po
 
 The settings.yaml and tags.yaml files in the `./dependencies/apriltag_ros/src/apriltag_ros/config` folder shall be replaced by files with the same names in the dependencies folder.
 
-#### Pick and place with Ket Full run 1
+#### Pick and place with Ket Full
 
-[video](https://photos.app.goo.gl/kcMkWEM2xJDghHP7A)
-
+[video](sample_logs/SmallKetPickAndPlace.mp4)
 
 
 ## Description of debugging functionality using GPT4
