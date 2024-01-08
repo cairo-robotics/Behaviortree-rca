@@ -89,3 +89,36 @@ A few results can be seen here:
 
 Test run locally using chatbot made using Langchain and OpenAI gpt-3.5-turbo can be found in
 ```src/root_cause_analysis/scripts/experiment1.txt```
+
+#### Steps to run the experiment:
+Installing dependencies:
+```bash
+git clone -r <this-repository>
+cd dependencies/
+rosdep install --from-paths src --ignore-src -r -y  # Install any missing packages
+catkin build    # Build all packages in the workspace (catkin_make_isolated will work also)
+source devel/setup.bash
+```
+
+```bash
+roslaunch realsense2_camera rs_aligned_depth.launch
+# Open a new tab
+cd dependencies/
+source devel/setup.bash
+roslaunch apriltag_ros continuous_detection.launch
+# Open a new tab
+cd ..
+catkin build pick_and_place
+source devel/setup.bash
+rosrun pick_and_place BTNodeServer.py
+# Open a new tab
+python3 scripts/pickPlacePoseDetermination.py
+# When ready to do an experiment, run this command in a new terminal tab
+source devel/setup.bash
+rosrun pick_and_place pick_and_place
+```
+
+To run the user study run the following commands:
+```bash
+python3 src/root_cause_analysis/botclass.py
+```

@@ -470,7 +470,80 @@ static const char* testTree = R"(
  </root>
 )";
 
-static const char* testVisualFeedback = R"(
+static const char* finalBehaviorTree = R"(
+ <root BTCPP_format="3">
+    <BehaviorTree ID="PickAndPlaceTree">
+        <Sequence>
+          <CreateIntQueue queue="{queue}"/>
+        
+            <gripperOpen/>
+
+            <RetryUntilSuccessful num_attempts="5">
+                <retract retractCmd="True"/>
+            </RetryUntilSuccessful>
+
+            <RetryUntilSuccessful num_attempts="5">
+                <ServoToPose ServoToPose="bigCylinder_location"/>
+            </RetryUntilSuccessful>
+
+            <gripperClose/>
+
+            <RetryUntilSuccessful num_attempts="5">
+                <retract retractCmd="False"/>
+            </RetryUntilSuccessful>
+
+            <RetryUntilSuccessful num_attempts="5">
+                <ServoToPose ServoToPose="bigCylinder_insertion"/>
+            </RetryUntilSuccessful>
+
+            <gripperOpen/>
+
+            <RetryUntilSuccessful num_attempts="5">
+                <retract retractCmd="True"/>
+            </RetryUntilSuccessful>
+
+            <RetryUntilSuccessful num_attempts="5">
+                <ServoToPose ServoToPose="smallCylinder_location"/>
+            </RetryUntilSuccessful>
+
+            <gripperClose/>
+
+            <RetryUntilSuccessful num_attempts="5">
+                <retract retractCmd="False"/>
+            </RetryUntilSuccessful>
+
+            <RetryUntilSuccessful num_attempts="5">
+                <ServoToPose ServoToPose="smallCylinder_insertion"/>
+            </RetryUntilSuccessful>
+
+            <gripperOpen/>
+
+            <RetryUntilSuccessful num_attempts="5">
+                <retract retractCmd="True"/>
+            </RetryUntilSuccessful>
+
+            <RetryUntilSuccessful num_attempts="5">
+                <ServoToPose ServoToPose="ket_location"/>
+            </RetryUntilSuccessful>
+
+            <gripperClose/>
+
+            <RetryUntilSuccessful num_attempts="5">
+                <retract retractCmd="False"/>
+            </RetryUntilSuccessful>
+
+            <RetryUntilSuccessful num_attempts="5">
+                <ServoToPose ServoToPose="ket_insertion"/>
+            </RetryUntilSuccessful>
+
+            <gripperOpen/>
+
+        </Sequence>
+    </BehaviorTree ID="DemoTry">
+ </root>
+)";
+
+static const char* singleStageBehaviorTree = R"(
  <root BTCPP_format="3">
     <BehaviorTree ID="DemoTry">
         <Sequence>
@@ -535,7 +608,7 @@ int main(int argc, char **argv){
     factory.registerBuilder<retract>("retract", retract_node);
     factory.registerBuilder<visualFeedback>("visualFeedback", visualFeedback_node);
 
-    auto tree = factory.createTreeFromText(::testVisualFeedback);
+    auto tree = factory.createTreeFromText(::finalBehaviorTree);
 
     tree.tickRootWhileRunning();
     spinner.stop();
