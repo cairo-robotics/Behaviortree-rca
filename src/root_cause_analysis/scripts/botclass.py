@@ -21,7 +21,7 @@ import docstring_parser
 from bs4 import BeautifulSoup
 from enum import Enum
 from pathlib import Path
-
+import scipy.linalg as lnalg
 
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
@@ -47,7 +47,7 @@ class trainClassifier():
             self.mapping = json.load(f)
 
     def loadData(self, xmlPath : str) -> None:
-        self.dataframe = pd.read_pickle('classificationTraining.pkl')
+        self.dataframe = pd.read_pickle('classificationTraining_adav2.pkl')
         self.nodes     = []
         # Saves unique items in a list with relative order maintained.
         for item in self.dataframe.Label.values:
@@ -75,12 +75,12 @@ class trainClassifier():
         with open('QuestionClassificationModel.pkl','wb') as f:
             pickle.dump(self.clustering_model,f)
         with open("ClassificationLabels.json", "w") as f:
-            json.dump(self.mapping, f, indent=4)        
+            json.dump(self.mapping, f, indent=4)
 
     def isolate_description(self, response : str) -> list:
         soup = BeautifulSoup(response, 'html.parser')
         li_texts = [li.text for li in soup.find_all('li')]
-        return li_texts 
+        return li_texts
 
     def loadNodes(self, xmlPath : str) -> dict:
         with open(xmlPath, 'r') as file:
@@ -116,13 +116,13 @@ class trainClassifier():
                                                 messages=[{"role": "user", "content": f"Write {self.count} unique questions about the behaviortree node {i} that uniquely capture the action that this behaviortree node does and, write them inside <li> tags so that it is easy to parse."}])
             ques      = self.isolate_description(response.choices[0].message.content)
             data1     = data1 + (ques)
-            embd      = openai.Embedding.create(input=ques, engine="text-similarity-babbage-001")
+            embd      = openai.Embedding.create(input=ques, engine="text-embedding-ada-002")
             resp_embeddings = resp_embeddings  +  [(i.embedding/np.linalg.norm(i.embedding, axis=0, keepdims=True)) for i in embd.data] 
             label     = label + [i for _ in range(self.count)]
             print(label, data1, len(data1), len(resp_embeddings))
 
         self.dataframe = pd.DataFrame({'Label' : label, 'Text' : data1, 'davinci_similarity' : resp_embeddings})
-        self.dataframe.to_pickle('classificationTraining.pkl')
+        self.dataframe.to_pickle('classificationTraining_adav2.pkl')
 
 class Bot(ABC):
     def __init__(self) -> None:
@@ -136,6 +136,7 @@ class Bot(ABC):
                                         memory=self.memory
                                         )
         self.nodes_logs         =  None
+        self.dataframe = pd.read_pickle('classificationTraining_adav2.pkl')
 
     def extract_docstrings_from_file(self, file_path):
         """_summary_
@@ -213,13 +214,23 @@ class Bot(ABC):
     def chatbot_prompt(self):
         self.message += "\nGiven this information, you're now given a human user who has observed the entire experiment happen, by taking inputs from the user you have to perform a root cause analysis on the behaviortree and suggest changes in a final report. You can ask the user questions in one by one manner, you can start by asking how did the experiment go, followed by subsequent questions that you think will be helpful for debugging the system."
 
-    def cluster_prompt(self, message : str, textClassifier : trainClassifier) -> None:
-        embd      = openai.Embedding.create(input=message, engine="text-similarity-babbage-001")
+    def cluster_prompt(self, message : str, X : np.ndarray, textClassifier : trainClassifier) -> None:
+        embd      = openai.Embedding.create(input=message, engine="text-embedding-ada-002")
         embd      = embd.data[0].embedding/np.linalg.norm(embd.data[0].embedding,
                                                           axis=0,
                                                           keepdims=True).reshape(1, -1)
         predict   = textClassifier.clustering_model.predict(embd)
-        return predict
+        X         = np.vstack((X, embd[0], textClassifier.clustering_model.cluster_centers_)) # This calculates t-sne embedding for 
+        tsne = TSNE(random_state=0, n_iter=10000)
+        tsne_results = tsne.fit_transform(X)
+        
+        print([np.linalg.norm(tsne_results[101 + i] - tsne_results[100], axis=0, keepdims=True) for i in range(5)])
+        dist      = [np.linalg.norm(tsne_results[101 + i] - tsne_results[100], axis=0, keepdims=True) for i in range(5) if np.linalg.norm(tsne_results[101 + i] - tsne_results[100], axis=0, keepdims=True) > 2.0]
+
+        if len(dist) > 0:
+            return -1
+        del X
+        return predict[0]
 
     def load_logs(self, logs_loc : str) -> None:
         """Loads docstring into a pandas data frame for efficient searching
@@ -233,7 +244,7 @@ class Bot(ABC):
             for line in file:
                 # You can process the line here if needed
                 # strip() removes any leading/trailing whitespace including newlines
-                log_lines.append(line.strip())  
+                log_lines.append(line.strip())
 
         fmt = "[{rospy_node_type}][{log_severity}] {date_time}: {node_log}"
 
@@ -285,32 +296,23 @@ class Bot(ABC):
             "ClassificationLabels.json"
             )
         self.load_logs(str(Path.home()) + "/.ros/log/CommandServer.log")
-
         # Predict is string of an int because text classifier
         # mapping takes str of respective numbers
         # to identify clustered nodes from the KMeans model
         predict = "-1"
 
         while True:
+            X = np.array([i.astype(np.float64) for i in self.dataframe.davinci_similarity.values],dtype=np.float64)
             if predict != "-1":
                 occurance_log = ""
-                occourances = self.nodes_logs.node_name.index[self.nodes_logs.node_name == textClassifier.mapping[str(predict[0])]]
+                occourances = self.nodes_logs.node_name.index[self.nodes_logs.node_name == textClassifier.mapping[str(predict)]]
                 for i in occourances:
                     occurance_log += self.nodes_logs.node_log[i] + " at time: " + self.nodes_logs.date_time[i] + "; "
-
+            print("Predict: ", predict)
             self.message = "" if predict == "-1" else f"The log for node {textClassifier.mapping[predict]} is {occurance_log} and the description for the same is {self.ServerFunctions_dict[textClassifier.mapping[predict]].short_description}, I hope this answers the query about the previous doubt, the user may not be aware exactly but this is what the logs say. User's response about real world observation: "
             self.message += input("Enter Your Response: ")
-
-            save_conversation += "User response: " + self.message[21:] + "\n \n"
-
-            reply = self.conversation.predict(input=self.message)
-
-            save_conversation += "AI response: " + reply + "\n \n"
-
-            predict = str(self.cluster_prompt(reply, textClassifier)[0])
-            print(Fore.GREEN + reply + Style.RESET_ALL)
-
-            if "complete" in reply and "report" in reply:
+            
+            if "ANALYSIS COMPLETE" in self.message:
 
                 shutil.move(str(Path.home()) + "/.ros/log/CommandServer.log",
                             str(Path.home()) + "/HRIPapers/Experiments/CommandServer.log"
@@ -322,6 +324,17 @@ class Bot(ABC):
                 shutil.move("Conversation.txt",
                             str(Path.home()) + "/HRIPapers/Experiments/Conversation.txt"
                             )
+
+            save_conversation += "User response: " + self.message[21:] + "\n \n"
+
+            reply = self.conversation.predict(input=self.message)
+
+            save_conversation += "AI response: " + reply + "\n \n"
+            breakpoint()
+            predict = str(self.cluster_prompt(reply, X, textClassifier))
+            print(Fore.GREEN + reply + Style.RESET_ALL)
+
+                
 
 def bot_test():
     """_summary_
@@ -336,8 +349,9 @@ def training_classifier():
     """_summary_
     """
     tt = trainClassifier()
-    # tt.createData("../../pick_and_place/src/temp.xml")
-    # tt.loadData("../../pick_and_place/src/temp.xml")
-    tt.loadLabelsAndModel("QuestionClassificationModel.pkl", "ClassificationLabels.json")
+    tt.createData("../../pick_and_place/src/temp.xml")
+    tt.loadData("../../pick_and_place/src/temp.xml")
+    # tt.loadLabelsAndModel("QuestionClassificationModel_adav2.pkl", "ClassificationLabels.json")
 
 bot_test()
+# training_classifier()

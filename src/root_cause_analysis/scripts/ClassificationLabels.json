@@ -1,7 +1,7 @@
 {
     "0": "RetractServiceServer",
-    "1": "GripperServiceServer",
-    "4": "visualFeedback",
-    "3": "GripperServiceServer",
-    "2": "ServoToPoseServiceServer"
+    "2": "visualFeedback",
+    "3": "ServoToPoseServiceServer",
+    "4": "GripperServiceServer",
+    "1": "GripperServiceServer"
 }
