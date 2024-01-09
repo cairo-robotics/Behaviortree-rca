@@ -31,7 +31,7 @@ class CommandServer():
 
     def _guarded_move_to_joint_position(self, joint_angles, timeout=5.0):
         """
-        GuardedMoveToJointPositionServer: Moves the arm to the given joint angles
+        GuardedMoveToJointPositionServer: Moves the sawyer arm to the requested joint angle positions, thows an error if the controller fails to reach the requested joint angles.
 
         Args:
             joint_angles (np.array): Joint angles to give to the controller.
@@ -47,13 +47,13 @@ class CommandServer():
             self._limb.move_to_joint_positions(joint_angles,timeout=timeout)
             self._loginfo("[GuardedMoveToJointPositionServer]", "Successfully executed guarded move to joint position")
         else:
-            rospy.logerr("No Joint Angles provided for move_to_joint_positions. Staying put.")
+            rospy.logerr("Failed to Servo to Joint Angles provided for move_to_joint_positions. Staying put.")
             return "error"
         return "success"
 
     def gripper_srv(self, cmd):
         """
-        GripperServiceServer: Gripper command callback for the gripper_cmd service
+        GripperServiceServer: Gripper service to open/close the gripper, reports the status weather the arm is connected and gripper is able to operate or not.
 
         Args:
             cmd (string): Command to open or close the gripper
@@ -140,8 +140,7 @@ class CommandServer():
 
     def _servo_to_pose(self, poseNameTfTree_msg, timeout=7.0):
         """
-        ServoToPoseServiceServer: A Cartesian move
-
+        ServoToPoseServiceServer: Servos to the pose of requested transform. Takes the transform name, finds the respective position w.r.t base using /tf topic and calls move to joint function to servo to the requested frame position.
         Args:
             poseNameTfTree_msg (rosmsg str): Name of transform in transform tree 
             timeout (seconds):               Timeout for calling the service 
@@ -154,7 +153,7 @@ class CommandServer():
         time.sleep(5)
         
         while(tries < 5):
-            try: 
+            try:
                 (trans,rot) = listener.lookupTransform('/right_gripper_tip', poseNameTfTree_msg.servo_to_pose, rospy.Time(0))
                 Tmat_right_gripper_tip_Ket = tf.transformations.quaternion_matrix(rot)
                 Tmat_right_gripper_tip_Ket[:3, 3] = trans
@@ -207,7 +206,7 @@ class CommandServer():
 
     def _retract(self, cmd):
         """
-        RetractServiceServer: Move to pose at a hoverdistance
+        RetractServiceServer: Move to pose at a hoverdistance above the mat or the NIST board. From these positions the desired pose to pick or insert is found.
 
         Args:
             cmd (Bool): Choose one of the two positions to be retracted to
