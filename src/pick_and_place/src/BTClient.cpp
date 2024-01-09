@@ -473,9 +473,7 @@ static const char* testTree = R"(
 static const char* finalBehaviorTree = R"(
  <root BTCPP_format="3">
     <BehaviorTree ID="PickAndPlaceTree">
-        <Sequence>
-          <CreateIntQueue queue="{queue}"/>
-        
+        <Sequence>        
             <gripperOpen/>
 
             <RetryUntilSuccessful num_attempts="5">

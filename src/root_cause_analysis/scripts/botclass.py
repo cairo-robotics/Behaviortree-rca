@@ -330,7 +330,6 @@ class Bot(ABC):
             reply = self.conversation.predict(input=self.message)
 
             save_conversation += "AI response: " + reply + "\n \n"
-            breakpoint()
             predict = str(self.cluster_prompt(reply, X, textClassifier))
             print(Fore.GREEN + reply + Style.RESET_ALL)
 

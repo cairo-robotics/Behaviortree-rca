@@ -1,0 +1,114 @@
+[rospy.client][INFO] 2024-01-09 10:32:25,541: init_node, name[/CommandServer], pid[116516]
+[xmlrpc][INFO] 2024-01-09 10:32:25,542: XML-RPC server binding to 0.0.0.0:0
+[xmlrpc][INFO] 2024-01-09 10:32:25,542: Started XML-RPC server [http://192.168.50.94:46531/]
+[rospy.init][INFO] 2024-01-09 10:32:25,542: ROS Slave URI: [http://192.168.50.94:46531/]
+[rospy.impl.masterslave][INFO] 2024-01-09 10:32:25,542: _ready: http://192.168.50.94:46531/
+[rospy.registration][INFO] 2024-01-09 10:32:25,543: Registering with master node http://021708CP00107.local:11311
+[xmlrpc][INFO] 2024-01-09 10:32:25,544: xml rpc node: starting XML-RPC server
+[rospy.init][INFO] 2024-01-09 10:32:25,643: registered with master
+[rospy.rosout][INFO] 2024-01-09 10:32:25,643: initializing /rosout core topic
+[rospy.rosout][INFO] 2024-01-09 10:32:25,653: connected to core topic /rosout
+[rospy.simtime][INFO] 2024-01-09 10:32:25,658: /use_sim_time is not set, will not subscribe to simulated time [/clock] topic
+[rospy.internal][INFO] 2024-01-09 10:32:25,711: topic[/robot/limb/right/endpoint_state] adding connection to [http://021708CP00107.local:50484/], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:25,727: topic[/robot/limb/right/tip_states] adding connection to [http://021708CP00107.local:50484/], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:25,752: topic[/robot/limb/right/collision_detection_state] adding connection to [http://021708CP00107.local:50484/], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:25,753: topic[/robot/joint_states] adding connection to [http://021708CP00107.local:50484/], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:25,754: topic[/robot/joint_states] adding connection to [http://021708CP00107.local:52021/], count 1
+[rospy.internal][INFO] 2024-01-09 10:32:25,785: topic[/io/end_effector/config] adding connection to [http://021708CP00107.local:52021/], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:25,914: topic[/io/end_effector/right_gripper/config] adding connection to [http://021708CP00107.local:52021/], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:25,918: topic[/io/end_effector/right_gripper/state] adding connection to [http://021708CP00107.local:52021/], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:25,919: topic[/rosout] adding connection to [/rosout], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:25,959: topic[/robot/state] adding connection to [http://021708CP00107.local:50484/], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:25,959: topic[/robot/limb/right/joint_command_timeout] adding connection to [/realtime_loop], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:25,961: topic[/robot/limb/right/joint_command] adding connection to [/realtime_loop], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:25,962: topic[/robot/limb/right/set_speed_ratio] adding connection to [/realtime_loop], count 0
+[rosout][INFO] 2024-01-09 10:32:25,983: Robot Enabled
+[rospy.internal][INFO] 2024-01-09 10:32:26,122: topic[/io/end_effector/right_gripper/command] adding connection to [/end_effector_io], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:26,218: topic[/robot/set_super_enable] adding connection to [/realtime_loop], count 0
+[rosout][INFO] 2024-01-09 10:32:33,722: CommandServerLog([GripperServiceServer]):  Started Executing Gripper Open
+[rosout][INFO] 2024-01-09 10:32:35,828: CommandServerLog([GripperServiceServer]):  Successfully executed gripper Open command
+[rosout][INFO] 2024-01-09 10:32:37,955: CommandServerLog([GuardedMoveToJointPositionServer]):  Started Executing guarded move to joint position, timeout = 5.0
+[rosout][INFO] 2024-01-09 10:32:39,132: CommandServerLog([GuardedMoveToJointPositionServer]):  Successfully executed guarded move to joint position
+[rosout][INFO] 2024-01-09 10:32:39,144: CommandServerLog([ServoToPoseServiceServer]):  Querying desired pose in base frame of sawyer
+[rospy.internal][INFO] 2024-01-09 10:32:39,177: topic[/tf] adding connection to [http://192.168.50.94:35843/], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:39,177: topic[/tf] adding connection to [http://021708CP00107.local:47288/], count 1
+[rospy.internal][INFO] 2024-01-09 10:32:39,180: topic[/tf] adding connection to [http://021708CP00107.local:45648/], count 2
+[rospy.internal][INFO] 2024-01-09 10:32:39,182: topic[/tf] adding connection to [http://192.168.50.94:34567/], count 3
+[rospy.internal][INFO] 2024-01-09 10:32:39,197: topic[/tf_static] adding connection to [http://192.168.50.94:46863/], count 0
+[rospy.internal][INFO] 2024-01-09 10:32:39,198: topic[/tf] adding connection to [http://192.168.50.94:46863/], count 4
+[rospy.internal][INFO] 2024-01-09 10:32:39,201: topic[/tf_static] adding connection to [http://021708CP00107.local:55599/], count 1
+[rospy.internal][INFO] 2024-01-09 10:32:39,205: topic[/tf_static] adding connection to [http://021708CP00107.local:49010/], count 2
+[rosout][INFO] 2024-01-09 10:32:44,181: CommandServerLog([ServoToPoseServiceServer]):  Calling ik service to 
+[rosout][INFO] 2024-01-09 10:32:46,803: CommandServerLog([GripperServiceServer]):  Started Executing Gripper Close
+[rosout][INFO] 2024-01-09 10:32:48,911: CommandServerLog([GripperServiceServer]):  Successfully executed gripper Close command
+[rosout][INFO] 2024-01-09 10:32:51,199: CommandServerLog([GuardedMoveToJointPositionServer]):  Started Executing guarded move to joint position, timeout = 5.0
+[rosout][INFO] 2024-01-09 10:32:53,295: CommandServerLog([GuardedMoveToJointPositionServer]):  Successfully executed guarded move to joint position
+[rosout][INFO] 2024-01-09 10:32:53,309: CommandServerLog([ServoToPoseServiceServer]):  Querying desired pose in base frame of sawyer
+[rosout][INFO] 2024-01-09 10:32:58,320: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][INFO] 2024-01-09 10:32:59,327: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][INFO] 2024-01-09 10:33:00,332: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][INFO] 2024-01-09 10:33:01,340: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][INFO] 2024-01-09 10:33:02,347: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][ERROR] 2024-01-09 10:33:03,356: Error processing request: local variable 'trans' referenced before assignment
+['Traceback (most recent call last):\n', '  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/impl/tcpros_service.py", line 633, in _handle_request\n    response = convert_return_to_response(self.handler(request), self.response_class)\n', '  File "/home/dt/HRIPapers/BehaviorTreeWork/src/pick_and_place/scripts/BTNodeServer.py", line 175, in _servo_to_pose\n    x=trans[0],\n', "UnboundLocalError: local variable 'trans' referenced before assignment\n"]
+[rosout][INFO] 2024-01-09 10:33:03,371: CommandServerLog([ServoToPoseServiceServer]):  Querying desired pose in base frame of sawyer
+[rosout][INFO] 2024-01-09 10:33:08,385: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][INFO] 2024-01-09 10:33:09,390: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][INFO] 2024-01-09 10:33:10,399: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][INFO] 2024-01-09 10:33:11,405: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][INFO] 2024-01-09 10:33:12,411: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][ERROR] 2024-01-09 10:33:13,419: Error processing request: local variable 'trans' referenced before assignment
+['Traceback (most recent call last):\n', '  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/impl/tcpros_service.py", line 633, in _handle_request\n    response = convert_return_to_response(self.handler(request), self.response_class)\n', '  File "/home/dt/HRIPapers/BehaviorTreeWork/src/pick_and_place/scripts/BTNodeServer.py", line 175, in _servo_to_pose\n    x=trans[0],\n', "UnboundLocalError: local variable 'trans' referenced before assignment\n"]
+[rosout][INFO] 2024-01-09 10:33:13,433: CommandServerLog([ServoToPoseServiceServer]):  Querying desired pose in base frame of sawyer
+[rosout][INFO] 2024-01-09 10:33:18,454: CommandServerLog([ServoToPoseServiceServer]):  Calling ik service to 
+[rosout][INFO] 2024-01-09 10:33:21,123: CommandServerLog([GripperServiceServer]):  Started Executing Gripper Open
+[rosout][INFO] 2024-01-09 10:33:23,230: CommandServerLog([GripperServiceServer]):  Successfully executed gripper Open command
+[rosout][INFO] 2024-01-09 10:33:25,620: CommandServerLog([GuardedMoveToJointPositionServer]):  Started Executing guarded move to joint position, timeout = 5.0
+[rosout][INFO] 2024-01-09 10:33:26,799: CommandServerLog([GuardedMoveToJointPositionServer]):  Successfully executed guarded move to joint position
+[rosout][INFO] 2024-01-09 10:33:26,818: CommandServerLog([ServoToPoseServiceServer]):  Querying desired pose in base frame of sawyer
+[rosout][INFO] 2024-01-09 10:33:31,833: CommandServerLog([ServoToPoseServiceServer]):  Calling ik service to 
+[rosout][INFO] 2024-01-09 10:33:34,802: CommandServerLog([GripperServiceServer]):  Started Executing Gripper Close
+[rosout][INFO] 2024-01-09 10:33:36,910: CommandServerLog([GripperServiceServer]):  Successfully executed gripper Close command
+[rosout][INFO] 2024-01-09 10:33:39,536: CommandServerLog([GuardedMoveToJointPositionServer]):  Started Executing guarded move to joint position, timeout = 5.0
+[rosout][INFO] 2024-01-09 10:33:41,645: CommandServerLog([GuardedMoveToJointPositionServer]):  Successfully executed guarded move to joint position
+[rosout][INFO] 2024-01-09 10:33:41,660: CommandServerLog([ServoToPoseServiceServer]):  Querying desired pose in base frame of sawyer
+[rosout][INFO] 2024-01-09 10:33:46,669: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][INFO] 2024-01-09 10:33:47,680: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][INFO] 2024-01-09 10:33:48,686: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][INFO] 2024-01-09 10:33:49,693: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][INFO] 2024-01-09 10:33:50,702: CommandServerLog([ServoToPoseServiceServer]):  Failed to fetch the transform between desired position and base.
+[rosout][ERROR] 2024-01-09 10:33:51,708: Error processing request: local variable 'trans' referenced before assignment
+['Traceback (most recent call last):\n', '  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/impl/tcpros_service.py", line 633, in _handle_request\n    response = convert_return_to_response(self.handler(request), self.response_class)\n', '  File "/home/dt/HRIPapers/BehaviorTreeWork/src/pick_and_place/scripts/BTNodeServer.py", line 175, in _servo_to_pose\n    x=trans[0],\n', "UnboundLocalError: local variable 'trans' referenced before assignment\n"]
+[rosout][INFO] 2024-01-09 10:33:51,731: CommandServerLog([ServoToPoseServiceServer]):  Querying desired pose in base frame of sawyer
+[rosout][INFO] 2024-01-09 10:33:56,761: CommandServerLog([ServoToPoseServiceServer]):  Calling ik service to 
+[rosout][INFO] 2024-01-09 10:33:59,715: CommandServerLog([GripperServiceServer]):  Started Executing Gripper Open
+[rosout][INFO] 2024-01-09 10:34:01,825: CommandServerLog([GripperServiceServer]):  Successfully executed gripper Open command
+[rosout][INFO] 2024-01-09 10:34:04,020: CommandServerLog([GuardedMoveToJointPositionServer]):  Started Executing guarded move to joint position, timeout = 5.0
+[rosout][INFO] 2024-01-09 10:34:05,201: CommandServerLog([GuardedMoveToJointPositionServer]):  Successfully executed guarded move to joint position
+[rosout][INFO] 2024-01-09 10:34:05,214: CommandServerLog([ServoToPoseServiceServer]):  Querying desired pose in base frame of sawyer
+[rosout][INFO] 2024-01-09 10:34:10,239: CommandServerLog([ServoToPoseServiceServer]):  Calling ik service to 
+[rosout][INFO] 2024-01-09 10:34:12,799: CommandServerLog([GripperServiceServer]):  Started Executing Gripper Close
+[rosout][INFO] 2024-01-09 10:34:14,908: CommandServerLog([GripperServiceServer]):  Successfully executed gripper Close command
+[rosout][INFO] 2024-01-09 10:34:17,111: CommandServerLog([GuardedMoveToJointPositionServer]):  Started Executing guarded move to joint position, timeout = 5.0
+[rosout][INFO] 2024-01-09 10:34:19,205: CommandServerLog([GuardedMoveToJointPositionServer]):  Successfully executed guarded move to joint position
+[rosout][INFO] 2024-01-09 10:34:19,220: CommandServerLog([ServoToPoseServiceServer]):  Querying desired pose in base frame of sawyer
+[rosout][INFO] 2024-01-09 10:34:24,247: CommandServerLog([ServoToPoseServiceServer]):  Calling ik service to 
+[rosout][INFO] 2024-01-09 10:34:27,144: CommandServerLog([GripperServiceServer]):  Started Executing Gripper Open
+[rosout][INFO] 2024-01-09 10:34:29,250: CommandServerLog([GripperServiceServer]):  Successfully executed gripper Open command
+[rospy.internal][INFO] 2024-01-09 10:45:25,915: topic[/tf_static] removing connection to http://192.168.50.94:46863/
+[rospy.internal][INFO] 2024-01-09 10:45:25,916: topic[/tf_static] removing connection to http://021708CP00107.local:55599/
+[rospy.internal][INFO] 2024-01-09 10:45:25,917: topic[/tf_static] removing connection to http://021708CP00107.local:49010/
+[rospy.internal][INFO] 2024-01-09 10:45:25,918: topic[/tf] removing connection to http://192.168.50.94:46863/
+[rospy.internal][INFO] 2024-01-09 10:46:08,917: topic[/tf] removing connection to http://192.168.50.94:35843/
+[rospy.internal][INFO] 2024-01-09 10:46:10,965: topic[/tf] removing connection to http://192.168.50.94:34567/
+[rospy.internal][INFO] 2024-01-09 10:46:15,061: topic[/io/end_effector/right_gripper/config] removing connection to http://021708CP00107.local:52021/
+[rospy.internal][INFO] 2024-01-09 10:46:36,310: topic[/tf] removing connection to http://021708CP00107.local:45648/
+[rospy.internal][INFO] 2024-01-09 10:46:36,310: topic[/tf] removing connection to http://021708CP00107.local:47288/
+[rospy.internal][INFO] 2024-01-09 10:46:37,590: topic[/robot/state] removing connection to http://021708CP00107.local:50484/
+[rospy.internal][INFO] 2024-01-09 10:46:37,592: topic[/robot/limb/right/tip_states] removing connection to http://021708CP00107.local:50484/
+[rospy.internal][INFO] 2024-01-09 10:46:37,593: topic[/robot/limb/right/endpoint_state] removing connection to http://021708CP00107.local:50484/
+[rospy.internal][INFO] 2024-01-09 10:46:37,594: topic[/io/end_effector/config] removing connection to http://021708CP00107.local:52021/
+[rospy.internal][INFO] 2024-01-09 10:46:37,594: topic[/io/end_effector/right_gripper/state] removing connection to http://021708CP00107.local:52021/
+[rospy.internal][INFO] 2024-01-09 10:46:37,595: topic[/robot/joint_states] removing connection to http://021708CP00107.local:50484/
+[rospy.internal][INFO] 2024-01-09 10:46:37,595: topic[/robot/limb/right/collision_detection_state] removing connection to http://021708CP00107.local:50484/
+[rospy.internal][INFO] 2024-01-09 10:46:37,595: topic[/robot/joint_states] removing connection to http://021708CP00107.local:52021/
