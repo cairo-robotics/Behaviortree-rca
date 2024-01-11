@@ -112,3 +112,47 @@
 [rospy.internal][INFO] 2024-01-09 10:46:37,595: topic[/robot/joint_states] removing connection to http://021708CP00107.local:50484/
 [rospy.internal][INFO] 2024-01-09 10:46:37,595: topic[/robot/limb/right/collision_detection_state] removing connection to http://021708CP00107.local:50484/
 [rospy.internal][INFO] 2024-01-09 10:46:37,595: topic[/robot/joint_states] removing connection to http://021708CP00107.local:52021/
+[rospy.core][INFO] 2024-01-10 14:36:54,944: signal_shutdown [signal-2]
+[rospy.core][INFO] 2024-01-10 14:37:07,902: signal_shutdown [signal-2]
+[rospy.registration][WARNING] 2024-01-10 14:37:07,947: unclean shutdown
+Traceback (most recent call last):
+  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/impl/registration.py", line 375, in cleanup
+    multi()
+  File "/usr/lib/python3.8/xmlrpc/client.py", line 879, in __call__
+    return MultiCallIterator(self.__server.system.multicall(marshalled_list))
+  File "/usr/lib/python3.8/xmlrpc/client.py", line 1109, in __call__
+    return self.__send(self.__name, args)
+  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/core.py", line 669, in _ServerProxy__request
+    return xmlrpcclient.ServerProxy._ServerProxy__request(
+  File "/usr/lib/python3.8/xmlrpc/client.py", line 1450, in __request
+    response = self.__transport.request(
+  File "/usr/lib/python3.8/xmlrpc/client.py", line 1153, in request
+    return self.single_request(host, handler, request_body, verbose)
+  File "/usr/lib/python3.8/xmlrpc/client.py", line 1165, in single_request
+    http_conn = self.send_request(host, handler, request_body, verbose)
+  File "/usr/lib/python3.8/xmlrpc/client.py", line 1278, in send_request
+    self.send_content(connection, request_body)
+  File "/usr/lib/python3.8/xmlrpc/client.py", line 1308, in send_content
+    connection.endheaders(request_body)
+  File "/usr/lib/python3.8/http/client.py", line 1251, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/usr/lib/python3.8/http/client.py", line 1011, in _send_output
+    self.send(msg)
+  File "/usr/lib/python3.8/http/client.py", line 951, in send
+    self.connect()
+  File "/usr/lib/python3.8/http/client.py", line 922, in connect
+    self.sock = self._create_connection(
+  File "/usr/lib/python3.8/socket.py", line 787, in create_connection
+    for res in getaddrinfo(host, port, 0, SOCK_STREAM):
+  File "/usr/lib/python3.8/socket.py", line 918, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno -2] Name or service not known
+
+[rospy.internal][INFO] 2024-01-10 14:37:07,947: topic[/rosout] removing connection to /rosout
+[rospy.internal][INFO] 2024-01-10 14:37:07,948: topic[/robot/limb/right/set_speed_ratio] removing connection to /realtime_loop
+[rospy.internal][INFO] 2024-01-10 14:37:07,948: topic[/robot/limb/right/joint_command] removing connection to /realtime_loop
+[rospy.internal][INFO] 2024-01-10 14:37:07,948: topic[/robot/limb/right/joint_command_timeout] removing connection to /realtime_loop
+[rospy.internal][INFO] 2024-01-10 14:37:07,948: topic[/io/end_effector/right_gripper/command] removing connection to /end_effector_io
+[rospy.internal][INFO] 2024-01-10 14:37:07,948: topic[/robot/set_super_enable] removing connection to /realtime_loop
+[rospy.impl.masterslave][INFO] 2024-01-10 14:37:07,948: signal-2
+[rospy.core][INFO] 2024-01-10 14:37:08,049: signal_shutdown [atexit]
