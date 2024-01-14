@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="pick_and_place" name="pick_and_place_client" type="pick_and_place" output="screen"/>
+</launch>
