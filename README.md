@@ -120,6 +120,6 @@ rosrun pick_and_place pick_and_place
 
 To run the user study run the following commands:
 ```bash
-cd src/root_cause_analysis/scripts
-python3 botclass.py
+cd <this-repository>
+python3 src/root_cause_analysis/scripts/botclass.py
 ```
