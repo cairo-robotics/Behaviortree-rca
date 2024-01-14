@@ -136,7 +136,7 @@ class Bot(ABC):
                                         memory=self.memory
                                         )
         self.nodes_logs         =  None
-        self.dataframe = pd.read_pickle('classificationTraining_adav2.pkl')
+        self.dataframe = pd.read_pickle(os.getcwd() + "/src/root_cause_analysis/scripts/classificationTraining_adav2.pkl")
 
     def extract_docstrings_from_file(self, file_path):
         """_summary_
@@ -223,8 +223,7 @@ class Bot(ABC):
         X         = np.vstack((X, embd[0], textClassifier.clustering_model.cluster_centers_)) # This calculates t-sne embedding for 
         tsne = TSNE(random_state=0, n_iter=10000)
         tsne_results = tsne.fit_transform(X)
-        
-        print([np.linalg.norm(tsne_results[101 + i] - tsne_results[100], axis=0, keepdims=True) for i in range(5)])
+
         dist      = [np.linalg.norm(tsne_results[101 + i] - tsne_results[100], axis=0, keepdims=True) for i in range(5) if np.linalg.norm(tsne_results[101 + i] - tsne_results[100], axis=0, keepdims=True) > 2.0]
 
         if len(dist) > 0:
@@ -292,8 +291,8 @@ class Bot(ABC):
 
         textClassifier = trainClassifier()
         textClassifier.loadLabelsAndModel(
-            "QuestionClassificationModel.pkl",
-            "ClassificationLabels.json"
+            os.getcwd() + "/src/root_cause_analysis/scripts/QuestionClassificationModel.pkl",
+            os.getcwd() + "/src/root_cause_analysis/scripts/ClassificationLabels.json"
             )
         self.load_logs(str(Path.home()) + "/.ros/log/CommandServer.log")
         # Predict is string of an int because text classifier
@@ -308,15 +307,11 @@ class Bot(ABC):
                 occourances = self.nodes_logs.node_name.index[self.nodes_logs.node_name == textClassifier.mapping[str(predict)]]
                 for i in occourances:
                     occurance_log += self.nodes_logs.node_log[i] + " at time: " + self.nodes_logs.date_time[i] + "; "
-            print("Predict: ", predict)
             self.message = "" if predict == "-1" else f"The log for node {textClassifier.mapping[predict]} is {occurance_log} and the description for the same is {self.ServerFunctions_dict[textClassifier.mapping[predict]].short_description}, I hope this answers the query about the previous doubt, the user may not be aware exactly but this is what the logs say. User's response about real world observation: "
             self.message += input("Enter Your Response: ")
-            
+
             if "ANALYSIS COMPLETE" in self.message:
 
-                shutil.move(str(Path.home()) + "/.ros/log/CommandServer.log",
-                            str(Path.home()) + "/HRIPapers/Experiments/CommandServer.log"
-                            )
 
                 with open("Conversation.txt", "w") as text_file:
                     text_file.write(save_conversation)
@@ -324,7 +319,16 @@ class Bot(ABC):
                 shutil.move("Conversation.txt",
                             str(Path.home()) + "/HRIPapers/Experiments/Conversation.txt"
                             )
-
+                
+                save_conversation += "User response: " + self.message[21:] + "\n \n"
+                reply = self.conversation.predict(input=self.message)
+                save_conversation += "AI response: " + reply + "\n \n"
+                shutil.move(str(Path.home()) + "/.ros/log/CommandServer.log",
+                            str(Path.home()) + "/HRIPapers/Experiments/CommandServer.log"
+                )
+                print(Fore.GREEN + "Experiment Complete!" + Style.RESET_ALL)
+                return
+                
             save_conversation += "User response: " + self.message[21:] + "\n \n"
 
             reply = self.conversation.predict(input=self.message)
@@ -339,17 +343,17 @@ def bot_test():
     """_summary_
     """
     tt = Bot()
-    tt.create_data("../../pick_and_place/src/BTClient.cpp",
-                   "../../pick_and_place/scripts/BTNodeServer.py",
-                   "../../pick_and_place/src/temp.xml")
+    tt.create_data(os.getcwd() + "/src/pick_and_place/src/BTClient.cpp",
+                   os.getcwd() + "/src/pick_and_place/scripts/BTNodeServer.py",
+                   os.getcwd() + "/src/pick_and_place/src/temp.xml")
     tt.bot_loop()
 
 def training_classifier():
     """_summary_
     """
     tt = trainClassifier()
-    tt.createData("../../pick_and_place/src/temp.xml")
-    tt.loadData("../../pick_and_place/src/temp.xml")
+    tt.createData(os.getcwd() + "/src/pick_and_place/src/temp.xml")
+    tt.loadData(os.getcwd() + "/src/pick_and_place/src/temp.xml")
     # tt.loadLabelsAndModel("QuestionClassificationModel_adav2.pkl", "ClassificationLabels.json")
 
 bot_test()

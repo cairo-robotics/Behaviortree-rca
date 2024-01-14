@@ -166,7 +166,7 @@ class CommandServer():
                 rot             = tf.transformations.quaternion_from_matrix(Tmat_final)
                 break
             except Exception as e:
-                self._loginfo("[ServoToPoseServiceServer]", "Failed to fetch the transform between desired position and base.")
+                self._loginfo("[ServoToPoseServiceServer]", f"Failed to fetch the transform between {poseNameTfTree_msg.servo_to_pose} and base.")
                 time.sleep(1)
                 tries += 1
                 continue
@@ -282,7 +282,7 @@ class CommandServer():
 
 
 def main():
-    tt = CommandServer() 
+    tt = CommandServer()
     srv1 = tt.gripper()
     srv2 = tt.approach()
     srv3 = tt.ServoToPose()
