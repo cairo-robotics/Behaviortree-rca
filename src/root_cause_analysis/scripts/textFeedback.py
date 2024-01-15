@@ -1,32 +1,30 @@
 import openai, os, re
 import pandas as pd
-from colorama import Fore, Style
-from sklearn.cluster import KMeans
-from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import seaborn as sns
-from statistics import mode
 import pickle
 import json
 import shutil
-
-from queue import Queue
-from lxml import etree
-from parse import parse
 import numpy as np
-import copy
-from abc import ABC
-from comment_parser import comment_parser
 import docstring_parser
-from bs4 import BeautifulSoup
-from enum import Enum
-from pathlib import Path
-import scipy.linalg as lnalg
 
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
+
+from colorama import Fore, Style
+from sklearn.cluster import KMeans
+from sklearn.manifold import TSNE
+from statistics import mode
+from queue import Queue
+from lxml import etree
+from parse import parse
+from abc import ABC
+from comment_parser import comment_parser
+from bs4 import BeautifulSoup
+from pathlib import Path
+
 
 
 class trainClassifier():
@@ -124,7 +122,7 @@ class trainClassifier():
         self.dataframe = pd.DataFrame({'Label' : label, 'Text' : data1, 'davinci_similarity' : resp_embeddings})
         self.dataframe.to_pickle('classificationTraining_adav2.pkl')
 
-class Bot(ABC):
+class textBot(ABC):
     def __init__(self) -> None:
         super().__init__()
         self.API_KEY            =  os.environ['OPENAI_API_KEY']
@@ -342,7 +340,7 @@ class Bot(ABC):
 def bot_test():
     """_summary_
     """
-    tt = Bot()
+    tt = textBot()
     tt.create_data(os.getcwd() + "/src/pick_and_place/src/BTClient.cpp",
                    os.getcwd() + "/src/pick_and_place/scripts/BTNodeServer.py",
                    os.getcwd() + "/src/pick_and_place/src/temp.xml")
@@ -357,4 +355,3 @@ def training_classifier():
     # tt.loadLabelsAndModel("QuestionClassificationModel_adav2.pkl", "ClassificationLabels.json")
 
 bot_test()
-# training_classifier()
