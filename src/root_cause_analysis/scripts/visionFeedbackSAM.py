@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle, torch, mmcv
 import torch.nn.functional as F
-import json, hydra
+import json, hydra, torch
 import shutil, sys
 import numpy as np
 import docstring_parser
@@ -30,16 +30,42 @@ from omegaconf import OmegaConf
 
 
 class visionBot(ABC):
+    """_summary_
+
+    Args:
+        ABC (ABC): Abstract base class
+    """
     def __init__(self) -> None:
         super().__init__()
 
-    def load_model(cfg, positive_points_per_mask, negative_points_per_mask):
+    def load_model(self, cfg, positive_points_per_mask, negative_points_per_mask):
+        """_summary_
+
+        Args:
+            cfg (_type_): _description_
+            positive_points_per_mask (_type_): _description_
+            negative_points_per_mask (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         cfg.model.positive_points_per_mask = positive_points_per_mask
         cfg.model.negative_points_per_mask = negative_points_per_mask
         model = instantiate(cfg.model)
         return model.to("cuda" if torch.cuda.is_available() else "cpu").eval()
 
-    def run_inference(model, rgbs, query_points, target_hw):
+    def run_inference(self, model, rgbs, query_points, target_hw):
+        """_summary_
+
+        Args:
+            model (_type_): _description_
+            rgbs (_type_): _description_
+            query_points (_type_): _description_
+            target_hw (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         n_masks, n_points_per_mask, _ = query_points.shape
         n_frames, _, _, _ = rgbs.shape
 
@@ -70,9 +96,22 @@ class visionBot(ABC):
 
         assert logits.shape[0] == n_frames
         if trajectories is None:
-            trajectories = torch.zeros((n_frames, n_masks, n_points_per_mask, 2), dtype=torch.float32)
-            visibilities = torch.zeros((n_frames, n_masks, n_points_per_mask), dtype=torch.float32)
+            trajectories = torch.zeros(
+                                        (n_frames,
+                                         n_masks,
+                                         n_points_per_mask,
+                                         2),
+                                        dtype=torch.float32
+                                    )
+            visibilities = torch.zeros(
+                                        (n_frames,
+                                         n_masks,
+                                         n_points_per_mask
+                                        ),
+                                        dtype=torch.float32
+                                       )
             scores = torch.zeros(n_masks, dtype=torch.float32)
+            
         assert trajectories.shape == (n_frames, n_masks, n_points_per_mask, 2)
 
         # Post process the predictions to set masks to zero for all frames before the query frame
@@ -82,7 +121,17 @@ class visionBot(ABC):
 
         return logits, trajectories, visibilities, scores
 
-    def load_query_points(query_points_path, frame_stride, resize_factor):
+    def load_query_points(self, query_points_path, frame_stride, resize_factor):
+        """_summary_
+
+        Args:
+            query_points_path (_type_): _description_
+            frame_stride (_type_): _description_
+            resize_factor (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         query_point_timestep_list = []
         query_points_list = []
         with open(query_points_path, 'r') as f:
@@ -108,9 +157,24 @@ class visionBot(ABC):
         query_points_xy = torch.stack(query_points_list)
         query_points_timestep = torch.tensor(query_point_timestep_list, dtype=torch.float32)[:, None, None]
         query_points = torch.cat([query_points_timestep.repeat(1, query_points_xy.shape[1], 1), query_points_xy], dim=2)
+        return query_points, num_positive_points
 
-    def load_demo_data(frames_path, query_points_path, frame_stride=1, longest_side_length=None,
+    def load_demo_data(self, frames_path, query_points_path, frame_stride=1, longest_side_length=None,
                     annot_size=8, annot_line_width=4, max_frames=None):
+        """_summary_
+
+        Args:
+            frames_path (_type_): _description_
+            query_points_path (_type_): _description_
+            frame_stride (int, optional): _description_. Defaults to 1.
+            longest_side_length (_type_, optional): _description_. Defaults to None.
+            annot_size (int, optional): _description_. Defaults to 8.
+            annot_line_width (int, optional): _description_. Defaults to 4.
+            max_frames (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+            _type_: _description_
+        """
         assert query_points_path is not None
 
         # Load frames
@@ -138,8 +202,6 @@ class visionBot(ABC):
         rgbs = torch.stack(rgbs)
 
         # Load query points from a file or select them interactively from the first frame
-        query_points, num_positive_points = load_query_points(query_points_path, frame_stride, resize_factor)
+        query_points, num_positive_points = self.load_query_points(query_points_path, frame_stride, resize_factor)
 
         return rgbs, num_positive_points, query_points
-
-        return query_points, num_positive_points
