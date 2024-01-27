@@ -1,0 +1,9 @@
+[submodule "apriltag"]
+	path = dependencies/src/apriltag
+	url  = https://github.com/AprilRobotics/apriltag
+[submodule "apriltag-ros"]
+	path = dependencies/src/apriltag_ros
+	url  = https://github.com/AprilRobotics/apriltag_ros
+[submodule "sam-pt-mobile"]
+	path = dependencies/sam-pt-mobile
+	url  = https://github.com/dt1729/sam-pt-mobile
