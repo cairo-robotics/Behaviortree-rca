@@ -30,7 +30,7 @@ The behaviortree implementation closely follows implementation methods from Beha
 
 #### SubTree Design:
 
-<img src="design.png" alt="Subtrees" width="200" />
+<img src="BehaviorTree.svg" alt="Subtrees" width="400" class="center" />
 
 #### Visual feedback functioning
 
@@ -54,12 +54,12 @@ The algorithm after that can be broken down as:
 #### Hand Eye calibration output
 The hand-eye calibration can be achieved using [this](https://github.com/dt1729/hand_eye_calibration.git) repository. This is the author's fork of the main repository and has issues resolved as per libraries available in 2023. 
 
-<img src="CalibrationOutput.png" alt="HandEyeCalibrationOutput" width="200"/>
+<img src="CalibrationOutput.png" alt="HandEyeCalibrationOutput" width="200" class="center"/>
 
 
 #### Pick Pose determination output
 
-<img src="PickPose.png" alt="PickPoseDeterminationOutput" width="200"/>
+<img src="PickPose.png" alt="PickPoseDeterminationOutput" width="200" class="center"/>
 
 #### Insert Pose determination method
 
