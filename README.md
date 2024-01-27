@@ -29,9 +29,9 @@ The behaviortree implementation closely follows implementation methods from Beha
 
 
 #### SubTree Design:
-
-<img src="BehaviorTree.svg" alt="Subtrees" width="400" class="center" />
-
+<p align="center">
+  <img src="BehaviorTree.svg" alt="Subtrees" width="400" align="center" />
+</p>
 #### Visual feedback functioning
 
 The visual feedback to pick up the object is achieved using a separate node contourPoseFinding.py which finds the pose of the ket when the arm is placed directly above it(in good lighting conditions). The distance between the arm and ket is desired to be 90cms(vertically). 
@@ -53,20 +53,20 @@ The algorithm after that can be broken down as:
 
 #### Hand Eye calibration output
 The hand-eye calibration can be achieved using [this](https://github.com/dt1729/hand_eye_calibration.git) repository. This is the author's fork of the main repository and has issues resolved as per libraries available in 2023. 
-
-<img src="CalibrationOutput.png" alt="HandEyeCalibrationOutput" width="200" class="center"/>
-
+<p align="center">
+  <img src="CalibrationOutput.png" alt="HandEyeCalibrationOutput" width="200" align="center"/>
+</p>
 
 #### Pick Pose determination output
-
-<img src="PickPose.png" alt="PickPoseDeterminationOutput" width="200" class="center"/>
-
+<p align="center">
+  <img src="PickPose.png" alt="PickPoseDeterminationOutput" width="200" align="center"/>
+</p>
 #### Insert Pose determination method
 
-The insert pose determination requires the apriltag-ros node that detects the pose of the apriltag stuck on the NIST board. This method is the replacement for a forcetorque based method for this sawyer robot. The flow is explained as follows:
+The insert pose determination requires the apriltag-ros node that detects the pose of the apriltag stuck on the NIST board. This method is the replacement for a forcetorque-based method for this sawyer robot. The flow is explained as follows:
 - The continuous detection node in apriltag-ros publishes the pose in the /tf topic.
 - The servotopose client node in the behaviortree asks the server to servo to tag_118's pose.
-- The servo then moves to that pose. (This needs to be modified with a json file that stores poses of goal position with respect to apriltag's center)
+- The servo then moves to that pose. (This needs to be modified with a JSON file that stores poses of goal position with respect to Apriltag's center)
 
 The settings.yaml and tags.yaml files in the `./dependencies/apriltag_ros/src/apriltag_ros/config` folder shall be replaced by files with the same names in the dependencies folder.
 
@@ -77,9 +77,9 @@ The settings.yaml and tags.yaml files in the `./dependencies/apriltag_ros/src/ap
 
 ## Description of debugging functionality using GPT4
 
-This piece of software runs after the pick and insert experiment has been completed and observed by a user. The user is now presented with a terminal with GPT4 access preconditioned with the architecture of the behaviortree and access to the code's docstrings and client's node descriptions. Then the user provides the observations and a Q/A type conversation begins. If the system asks questions about success of a node, a kmeans model identifies that and uses an already designed prompt to accomodate the status of that node, along with it's description as given by the programmer. Then this string is appended to the user's response(if they have anything meaningful to add, we do not expect the user to have node level understanding of the run) and passed to the GPT. 
+This piece of software runs after the pick-and-insert experiment has been completed and observed by a user. The user is now presented with a terminal with GPT4 access preconditioned with the architecture of the behaviortree and access to the code's docstrings and client's node descriptions. Then the user provides the observations and a Q/A type conversation begins. If the GPT system asks questions about the success of a node, a kmeans model identifies that and uses an already designed prompt to accomodate the status of that node, along with it's description as given by the programmer. Then this string is appended to the user's response(if they have anything meaningful to add, we do not expect the user to have node level understanding of the run) and passed to the GPT. 
 
-Until now over 5-6 runs this system has shown promise while debugging and more runs are required to get a confirmed usecase for the system along with vision input which is now available.
+Until now over 5-6 runs this system has shown promise while debugging and more runs are required to get a confirmed use case for the system along with vision input which is now available.
 
 A few results can be seen here:
 
