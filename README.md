@@ -17,7 +17,7 @@ Other C++ and tools level things need to be installed using apt package manager 
 sudo apt-get install ros-noetic-cv-bridge ros-noetic-vision-opencv libboost-all-dev
 ```
 Installing behaviortree.cpp v3 is essential see this [link](https://github.com/BehaviorTree/BehaviorTree.CPP/tree/v3.8) for steps. Prefer Cmake steps as developers may have removed v3 installer when you install it.
-
+Intall jsoncpp present in `<path-to-dir>/src/jsoncpp` by following it's installation instructions.
 The repository assumes sawyer_sdk has been installed and sourced so that all message types and rospy services can be utilised.
 
 ## System Design
