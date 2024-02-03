@@ -1,3 +1,7 @@
+"""
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python HYDRA_FULL_ERROR=1 python3 -m demo.demo frames_path='${hydra:runtime.cwd}/data/demo_data/bees/' query_points_path=null longest_side_length=1024 frame_stride=10 max_frames=-1
+"""
+
 import openai, os, re
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,6 +12,8 @@ import json, hydra, torch
 import shutil, sys
 import numpy as np
 import docstring_parser
+import glob
+import cv2
 
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
@@ -205,3 +211,118 @@ class visionBot(ABC):
         query_points, num_positive_points = self.load_query_points(query_points_path, frame_stride, resize_factor)
 
         return rgbs, num_positive_points, query_points
+    
+    def load_demo_data_interactive(frames_path, query_points_path, frame_stride, longest_side_length,
+                                annot_size=8, annot_line_width=4, max_frames=None):
+        assert query_points_path is None, "Interactive mode does not support loading query points from a file"
+
+        frames = sorted(glob.glob(os.path.join(frames_path, '*.jpg')))
+        frames += sorted(glob.glob(os.path.join(frames_path, '*.png')))
+        assert len(frames) > 0, f"No frames found in {frames_path}"
+        frames = frames[::frame_stride]
+        if max_frames is not None:
+            frames = frames[:max_frames]
+        rgbs = []
+        for frame in frames:
+            img = cv2.imread(frame)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = torch.from_numpy(img).permute(2, 0, 1)
+
+            if longest_side_length is not None:
+                resize_factor = longest_side_length / max(img.shape[1], img.shape[2])
+                img = torch.nn.functional.interpolate(img[None], scale_factor=resize_factor)[0]
+            else:
+                resize_factor = 1.0
+
+            rgbs += [img]
+        rgbs = torch.stack(rgbs)
+        first_frame_img = rgbs[0].cpu().permute(1, 2, 0).flip(-1).numpy()
+        img = first_frame_img.copy()
+        positive_points_per_mask = None
+        negative_points_per_mask = None
+        frame_timestep = 0
+        while positive_points_per_mask is None:
+            x = input('How many positive points? ')
+            if x.isdigit():
+                positive_points_per_mask = int(x)
+        while negative_points_per_mask is None:
+            x = input('How many negative points? ')
+            if x.isdigit():
+                negative_points_per_mask = int(x)
+        # Mouse callback function
+        positions = []
+        timesteps = []
+        query_points_xy = []
+
+        def callback(event, x, y, flags, param):
+            if event == 1:
+                positions.append((x, y))
+                point_type = 'positive' if len(positions) <= positive_points_per_mask else 'negative'
+                print(f'Added {point_type} point {len(positions)} at ({x}, {y})')
+
+                cmap = plt.get_cmap('tab10')
+                cmap_colors = cmap(list(range(10)))
+                color = cmap_colors[len(query_points_xy)]
+                color = (int(color[0] * 255), int(color[1] * 255), int(color[2] * 255))
+                color = color[::-1]
+
+                if point_type == 'positive':
+                    cv2.circle(img, (x, y), annot_size, color, annot_line_width)
+                else:
+                    line_size = annot_size // 2 + 1
+                    cv2.line(
+                        img,
+                        (x - line_size, y - line_size),
+                        (x + line_size, y + line_size),
+                        color, annot_line_width,
+                    )
+                    cv2.line(
+                        img,
+                        (x + line_size, y - line_size),
+                        (x - line_size, y + line_size),
+                        color, annot_line_width,
+                    )
+
+                if len(positions) == positive_points_per_mask + negative_points_per_mask:
+                    timesteps.append(frame_timestep)
+                    query_points_xy.append(positions.copy())
+                    positions.clear()
+                    print(f'Added query points for mask {len(timesteps)}, '
+                        f'you can now select points for the next mask '
+                        f'or press esc to exit.')
+                    print()
+
+        cv2.namedWindow('sam-pt demo', flags=cv2.WINDOW_AUTOSIZE | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_NORMAL)
+        cv2.setMouseCallback('sam-pt demo', callback)
+        # Mainloop - show the image and collect the data
+        while True:
+            cv2.imshow('sam-pt demo', img)
+            # Wait, and allow the user to quit with the 'esc' key
+            k = cv2.waitKey(1)
+            # If user presses 'esc' exit
+            if k == 27:
+                break
+
+        # Write data to a format that can be used by the point tracking script
+        str = ''
+        str += f'{positive_points_per_mask}\n'
+        for i in range(len(timesteps)):
+            str += f'{timesteps[i]};'
+            str += " ".join([f'{x / resize_factor},{y / resize_factor}' for x, y in query_points_xy[i]])
+            str += '\n'
+
+        print("Below is the query point data that you can copy and paste into a file. "
+            "You can then use the point tracking script to track the predefined points "
+            "by passing the file as the query points path "
+            "as `query_points_path=/some/path/to/my_query_points.txt`, if providing a absolute path, "
+            "or as `query_points_path='${hydra:runtime.cwd}/my_query_points.txt'`, if providing a relative path.")
+        print("------------------")
+        print(str)
+        print("------------------")
+        print()
+
+        query_points_xy = torch.tensor(query_points_xy)
+        query_points_timestep = torch.tensor(timesteps, dtype=torch.float32)[:, None, None]
+        query_points_timestep = query_points_timestep.repeat(1, query_points_xy.shape[1], 1)
+        query_points = torch.cat([query_points_timestep, query_points_xy], dim=2)
+        return rgbs, positive_points_per_mask, query_points
