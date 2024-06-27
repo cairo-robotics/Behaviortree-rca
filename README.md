@@ -62,6 +62,7 @@ The hand-eye calibration can be achieved using [this](https://github.com/dt1729/
 <p align="center">
   <img src="PickPose.png" alt="PickPoseDeterminationOutput" width="200" align="center"/>
 </p>
+
 #### Insert Pose determination method
 
 The insert pose determination requires the apriltag-ros node that detects the pose of the apriltag stuck on the NIST board. This method is the replacement for a forcetorque-based method for this sawyer robot. The flow is explained as follows:
