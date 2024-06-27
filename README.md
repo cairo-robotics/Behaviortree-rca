@@ -32,6 +32,7 @@ The behaviortree implementation closely follows implementation methods from Beha
 <p align="center">
   <img src="BehaviorTree.svg" alt="Subtrees" width="400" align="center" />
 </p>
+
 #### Visual feedback functioning
 
 The visual feedback to pick up the object is achieved using a separate node contourPoseFinding.py which finds the pose of the ket when the arm is placed directly above it(in good lighting conditions). The distance between the arm and ket is desired to be 90cms(vertically). 
