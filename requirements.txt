@@ -1,6 +1,6 @@
 colorama==0.4.3
 comment_parser
-opencv-python==4.7.0.68
+opencv-python==4.8.1.78
 docstring_parser
 json5==0.9.6
 jsonschema==4.4.0
