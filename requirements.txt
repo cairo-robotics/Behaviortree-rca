@@ -4,7 +4,7 @@ opencv-python==4.8.1.78
 docstring_parser
 json5==0.9.6
 jsonschema==4.4.0
-langchain==0.0.233
+langchain==0.2.3
 lxml==4.5.0
 matplotlib==3.7.2
 multiprocessing
