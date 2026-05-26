@@ -1,125 +1,241 @@
-# Pick and Insert Root Cause Analysis using BehaviorTrees and ChatGPT
+# Pick-and-Insert Robot with Behavior Tree Root Cause Analysis
 
-## Description
+A ROS-based system for autonomous pick-and-insert manipulation using a Sawyer arm, with a GPT-powered post-experiment debugging tool. The robot picks three objects (ket, big cylinder, small cylinder) from a mat and inserts them into a NIST assembly board. After each run, an LLM chatbot assists a human observer in diagnosing failures.
 
-Behavior Tree and ROS based tool to do pick and insert like task using a sawyer arm and then debug the same using Natural Language input from a user who observed the experiment happen. The tools used are GPT4, ROS Melodic, BehaviorTrees.CPP. Other libraries are listed below that one needs to install.
+---
 
-## Installation
-Install the python libraries using requirements.txt. 
+## System Overview
 
-```bash
-pip3 install requirements.txt
+The software has two main subsystems:
+
+1. **Pick-and-Insert Execution** — A BehaviorTree.CPP client (C++) orchestrates the task by calling ROS services exposed by a Python server that wraps the Sawyer hardware API. A separate vision node detects object and insertion poses using depth camera data.
+
+2. **Root Cause Analysis (RCA)** — After the run, a LangChain+GPT chatbot is seeded with the system's code descriptions and ROS logs. It interviews a human observer, identifies which BT node is being discussed using a KMeans classifier, and appends relevant log entries to assist diagnosis.
+
+---
+
+## Hardware
+
+- **Robot arm**: Rethink Sawyer (7-DOF)
+- **Gripper**: Rethink electric parallel gripper
+- **Camera**: Intel RealSense RGBD (aligned depth + color streams)
+- **Assembly board**: NIST board with AprilTag `tag_118` for insertion pose reference
+
+---
+
+## Repository Structure
+
+```
+.
+├── src/
+│   ├── pick_and_place/
+│   │   ├── src/
+│   │   │   ├── BTClient.cpp              # BehaviorTree.CPP client — task orchestration
+│   │   │   └── GripperToCameraTransform.json  # Hand-eye calibration result
+│   │   ├── scripts/
+│   │   │   └── BTNodeServer.py           # Python ROS service server — hardware interface
+│   │   └── srv/                          # ROS service definitions
+│   │       ├── approach.srv
+│   │       ├── gripper.srv
+│   │       ├── retract.srv
+│   │       └── servotoPose.srv
+│   ├── root_cause_analysis/
+│   │   └── scripts/
+│   │       ├── textFeedback.py           # GPT-based RCA chatbot (text)
+│   │       ├── visionFeedback.py         # RCA chatbot with DINOv2 segmentation (experimental)
+│   │       ├── visionFeedbackSAM.py      # RCA chatbot with SAM-PT tracking (in progress)
+│   │       ├── classificationTraining_adav2.pkl   # KMeans training embeddings
+│   │       ├── QuestionClassificationModel.pkl    # Trained KMeans model
+│   │       └── ClassificationLabels.json          # Cluster-to-node label mapping
+│   └── jsoncpp/                          # jsoncpp library (built locally)
+├── scripts/
+│   ├── pickPlacePoseDetermination.py     # Vision node — ket detection and TF broadcasting
+│   ├── inference_node.py                 # YOLOv7 inference for NIST board hole detection
+│   ├── FaultIsolation.py                 # Particle filter for fault isolation (stub)
+│   ├── handEyeTransformPub.py            # Publishes hand-eye calibration transform
+│   ├── enpoint_state_publisher.py        # Publishes Sawyer endpoint state
+│   └── good_calibration_results/         # Stored hand-eye calibration output files
+├── transforms/
+│   ├── referencePickLocations.json       # (x,y) offsets of each object relative to ket center
+│   └── referenceInsertLocations.json     # (x,y,z) offsets of each insertion hole relative to tag_118
+├── treedefs/
+│   └── basic_tree.xml                    # Prototype BT with probability-tracking nodes
+├── launch/
+│   ├── pick_and_place_server.launch      # Launches BTNodeServer.py
+│   └── pick_and_place_client.launch      # Launches the compiled BTClient binary
+└── dependencies/                         # apriltag_ros and other ROS dependencies
 ```
 
-Other C++ and tools level things need to be installed using apt package manager for Ubuntu 20.04. 
+---
 
+## Pick-and-Insert Execution
+
+### Client: `BTClient.cpp`
+
+The C++ client uses BehaviorTree.CPP v3 to sequence the task. It defines the following action nodes:
+
+| Node | Description |
+|------|-------------|
+| `gripperOpen` | Calls `GripperCmd` service with command `"Open"` |
+| `gripperClose` | Calls `GripperCmd` service with command `"Close"` |
+| `approach` | Calls `ApproachCmd` with a pose read from the BT blackboard |
+| `ServoToPose` | Calls `ServoToPoseCmd` with a TF frame name; server looks up the pose at runtime |
+| `retract` | Calls `RetractCmd`; `True` → position over the mat, `False` → position over NIST board |
+| `visualFeedback` | Subscribes to `/visionFeedback/MeanValue`, transforms pose from camera to gripper frame, writes it to the blackboard |
+
+The active tree (`finalBehaviorTree`) executes the full three-object sequence: pick bigCylinder → insert → pick smallCylinder → insert → pick ket → insert. Each motion step is wrapped in `RetryUntilSuccessful` with 5 attempts.
+
+### Server: `BTNodeServer.py`
+
+A Python ROS node that wraps the Rethink `intera_interface` API and exposes four services:
+
+| Service | Handler | Behavior |
+|---------|---------|----------|
+| `GripperCmd` | `gripper_srv` | Opens or closes the gripper |
+| `ApproachCmd` | `_approach` | IK to a hover pose `hover_distance` above the target |
+| `ServoToPoseCmd` | `_servo_to_pose` | Looks up a named TF frame, computes IK, and moves to it |
+| `RetractCmd` | `_retract` | Moves to one of two hardcoded safe joint configurations |
+
+### Vision Node: `pickPlacePoseDetermination.py`
+
+Detects the ket and computes pick/insert poses, broadcasting them as named TF frames that `ServoToPose` can look up.
+
+**Pick pose detection pipeline:**
+1. Bilateral filter to smooth the RGB image
+2. Convert to HSV and threshold to isolate the grey ket on the violet mat
+3. Canny edge detection → contour finding
+4. Filter contours by area (320–380 px²) to isolate the ket at 90 cm camera height
+5. Fit an ellipse to the contour; its center gives the (x, y) pixel location
+6. Back-project to 3D using the aligned depth image and Open3D intrinsics
+7. Compute bigCylinder and smallCylinder positions using fixed offsets from `transforms/referencePickLocations.json`
+8. Broadcast TF frames: `ket_location`, `bigCylinder_location`, `smallCylinder_location`
+
+**Insert pose detection:**
+- AprilTag `tag_118` on the NIST board is detected by the `apriltag_ros` continuous detection node
+- Fixed offsets from `transforms/referenceInsertLocations.json` are applied to compute per-object insertion poses
+- Broadcast TF frames: `ket_insertion`, `bigCylinder_insertion`, `smallCylinder_insertion`
+
+**Hand-eye calibration** (`GripperToCameraTransform.json`) relates the gripper tip frame to the camera frame and is used when transforming detected poses. The calibration was performed using [this fork](https://github.com/dt1729/hand_eye_calibration.git) of the hand-eye calibration repository.
+
+---
+
+## Root Cause Analysis
+
+After the experiment, run `textFeedback.py` to start a GPT-4 assisted debugging session.
+
+### How it works
+
+1. **Context loading**: Parses docstrings from `BTNodeServer.py` and C++ doc-comments from `BTClient.cpp` to build a description of every node and service.
+2. **Log loading**: Parses `~/.ros/log/CommandServer.log` into a structured DataFrame keyed by node name and severity.
+3. **Initial prompt**: Seeds a LangChain `ConversationChain` with the system architecture, code descriptions, and the behavior tree XML. GPT takes the role of a debugging assistant.
+4. **Conversation loop**: The human observer describes what they saw. On each GPT reply:
+   - A **KMeans classifier** (trained on GPT-3.5 embeddings of 20 template questions per BT node) identifies which node the AI is asking about.
+   - If a node is identified, its log entries are prepended to the user's next message so GPT has the actual runtime data.
+5. **Completion**: Typing `ANALYSIS COMPLETE` ends the loop, saves the conversation transcript, and archives the log file.
+
+### Training the classifier
+
+The KMeans model is pre-trained and stored in `QuestionClassificationModel.pkl`. To retrain it on a different behavior tree, call `training_classifier()` in `textFeedback.py`, which generates 20 questions per node using GPT-3.5, embeds them with `text-embedding-ada-002`, and fits a new KMeans model.
+
+---
+
+## Installation
+
+**Python dependencies:**
+```bash
+pip3 install -r requirements.txt
+```
+
+**System dependencies (Ubuntu 20.04):**
 ```bash
 sudo apt-get install ros-noetic-cv-bridge ros-noetic-vision-opencv libboost-all-dev
 ```
-Installing behaviortree.cpp v3 is essential see this [link](https://github.com/BehaviorTree/BehaviorTree.CPP/tree/v3.8) for steps. Prefer Cmake steps as developers may have removed v3 installer when you install it.
-Intall jsoncpp present in `<path-to-dir>/src/jsoncpp` by following it's installation instructions.
-The repository assumes sawyer_sdk has been installed and sourced so that all message types and rospy services can be utilised.
 
-## System Design
-The software is broken down into a client-server like setup where the server(BTNodeServer.py) and the client(BTClient.cpp). These isolate the robot side development(ik, control and gripper operation) and app/behavior side development(move to point, trajectory definition, complex compound behaviors like pick, see, insert). 
+**BehaviorTree.CPP v3:**
+Install from the [v3.8 branch](https://github.com/BehaviorTree/BehaviorTree.CPP/tree/v3.8) using CMake. The v3 installer may have been removed by the time you read this, so prefer the CMake build steps.
 
-The specific implementation specific details can be seen in the function docstrings for the server node. 
+**jsoncpp:**
+Build from `src/jsoncpp/` following the instructions in that directory.
 
-The behaviortree implementation closely follows implementation methods from Behaviortree.cpp. The behavior tree can be broken down as follows: 
+**Sawyer SDK:**
+The repository assumes `sawyer_sdk` (Intera SDK) is installed and sourced so that all message types and `rospy` services are available.
 
-
-#### SubTree Design:
-<p align="center">
-  <img src="BehaviorTree.svg" alt="Subtrees" width="400" align="center" />
-</p>
-#### Visual feedback functioning
-
-The visual feedback to pick up the object is achieved using a separate node contourPoseFinding.py which finds the pose of the ket when the arm is placed directly above it(in good lighting conditions). The distance between the arm and ket is desired to be 90cms(vertically). 
-
-The algorithm after that can be broken down as:
-
-- Smooth the image using a bilateral filter to remove noise from sharp changes in contrast.
-- Convert the RGB image to HSV image, this makes the iron ket(grey) easily detectable on violet mat.
-- Find the edges in the image using Canny edge detection
-- Find contours in this image to identify the ket.
-- If any contour has an area between 320 - 380 (these numbers are unique for the ket but depend on the height at which camera is located) pixels, then ket is detected.
-- We fit an ellipse in this particular contour to identify ket. The center of the ellipse is the (x,y) location of the ket. 
-- To find the z position, we normalize the depth map spatially.
-- The depth map and rgb images are aligned so taking binary and of the image, gives contour's depth projection and thus the ket's base location.
-- The pick position is chosen a few cms above the base.
-- This pick position is in the camera frame, to get this information in base frame of the robot, we use our camera calibration parameters.
-- Camera calibration parameters are loaded from 'src/pick_and_place/src/GripperToCameraTransform.json', then this transform is broadcasted on the /tf topic. 
-- The ket to depth camera frame is also broadcasted to the /tf topic thus, completing the tf tree from base to ket. The client code using this can browse the topics independently and do a simple homogeneous matrix multiplication to get the final pose in base location.
-
-#### Hand Eye calibration output
-The hand-eye calibration can be achieved using [this](https://github.com/dt1729/hand_eye_calibration.git) repository. This is the author's fork of the main repository and has issues resolved as per libraries available in 2023. 
-<p align="center">
-  <img src="CalibrationOutput.png" alt="HandEyeCalibrationOutput" width="200" align="center"/>
-</p>
-
-#### Pick Pose determination output
-<p align="center">
-  <img src="PickPose.png" alt="PickPoseDeterminationOutput" width="200" align="center"/>
-</p>
-#### Insert Pose determination method
-
-The insert pose determination requires the apriltag-ros node that detects the pose of the apriltag stuck on the NIST board. This method is the replacement for a forcetorque-based method for this sawyer robot. The flow is explained as follows:
-- The continuous detection node in apriltag-ros publishes the pose in the /tf topic.
-- The servotopose client node in the behaviortree asks the server to servo to tag_118's pose.
-- The servo then moves to that pose. (This needs to be modified with a JSON file that stores poses of goal position with respect to Apriltag's center)
-
-The settings.yaml and tags.yaml files in the `./dependencies/apriltag_ros/src/apriltag_ros/config` folder shall be replaced by files with the same names in the dependencies folder.
-
-#### Pick and place with Ket Full
-
-[video](sample_logs/SmallKetPickAndPlace.mp4)
-
-
-## Description of debugging functionality using GPT4
-
-This piece of software runs after the pick-and-insert experiment has been completed and observed by a user. The user is now presented with a terminal with GPT4 access preconditioned with the architecture of the behaviortree and access to the code's docstrings and client's node descriptions. Then the user provides the observations and a Q/A type conversation begins. If the GPT system asks questions about the success of a node, a kmeans model identifies that and uses an already designed prompt to accomodate the status of that node, along with it's description as given by the programmer. Then this string is appended to the user's response(if they have anything meaningful to add, we do not expect the user to have node level understanding of the run) and passed to the GPT. 
-
-Until now over 5-6 runs this system has shown promise while debugging and more runs are required to get a confirmed use case for the system along with vision input which is now available.
-
-A few results can be seen here:
-
-#### Test GPT3.5 run
-
-[TestRun](https://chat.openai.com/share/d55a9086-3624-4caa-a764-1f8768433b6d)
-
-Test run locally using chatbot made using Langchain and OpenAI gpt-3.5-turbo can be found in
-```src/root_cause_analysis/scripts/experiment1.txt```
-
-#### Steps to run the experiment:
-Installing dependencies:
+**ROS dependencies:**
 ```bash
-git clone -r <this-repository>
 cd dependencies/
-rosdep install --from-paths src --ignore-src -r -y  # Install any missing packages
-catkin build    # Build all packages in the workspace (catkin_make_isolated will work also)
+rosdep install --from-paths src --ignore-src -r -y
+catkin build
 source devel/setup.bash
 ```
 
+---
+
+## Running the System
+
+Open separate terminals for each step:
+
 ```bash
+# 1. Start the RealSense camera
 roslaunch realsense2_camera rs_aligned_depth.launch
-# Open a new tab
-cd dependencies/
-source devel/setup.bash
+
+# 2. Start AprilTag detection
+cd dependencies/ && source devel/setup.bash
 roslaunch apriltag_ros continuous_detection.launch
-# Open a new tab
-cd ..
-catkin build pick_and_place
+
+# 3. Start the vision node (pick/insert pose detection)
+python3 scripts/pickPlacePoseDetermination.py
+
+# 4. Start the behavior tree server
 source devel/setup.bash
 rosrun pick_and_place BTNodeServer.py
-# Open a new tab
-python3 scripts/pickPlacePoseDetermination.py
-# When ready to do an experiment, run this command in a new terminal tab
+
+# 5. Build and run the behavior tree client
+catkin build pick_and_place
 source devel/setup.bash
 rosrun pick_and_place pick_and_place
 ```
 
-To run the user study run the following commands:
+### Running the RCA chatbot
+
+After the experiment is complete:
 ```bash
-cd <this-repository>
-python3 src/root_cause_analysis/scripts/botclass.py
+cd <repository-root>
+python3 src/root_cause_analysis/scripts/textFeedback.py
 ```
+
+Set your OpenAI API key before running:
+```bash
+export OPENAI_API_KEY=<your-key>
+```
+
+---
+
+## Results
+
+**Hand-eye calibration output:**
+
+<p align="center">
+  <img src="CalibrationOutput.png" alt="Hand-Eye Calibration Output" width="200"/>
+</p>
+
+**Pick pose determination output:**
+
+<p align="center">
+  <img src="PickPose.png" alt="Pick Pose Determination Output" width="200"/>
+</p>
+
+**Behavior tree subtree design:**
+
+<p align="center">
+  <img src="BehaviorTree.svg" alt="Subtree Design" width="400"/>
+</p>
+
+**Full pick-and-place run (ket):**
+
+[SmallKetPickAndPlace.mp4](sample_logs/SmallKetPickAndPlace.mp4)
+
+**RCA chatbot test run (GPT-3.5):**
+
+[View conversation](https://chat.openai.com/share/d55a9086-3624-4caa-a764-1f8768433b6d)
+
+Local experiment transcript: `src/root_cause_analysis/scripts/experiment1.txt`

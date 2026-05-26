@@ -10,7 +10,6 @@
 #include <boost/function.hpp>
 #include "jsoncpp/json/json.h"
 
-
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Pose.h>
